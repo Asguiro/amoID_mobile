@@ -1,0 +1,61 @@
+---
+description: Microblink-inspired mobile UI rules for AMO app
+globs:
+  - "**/*.tsx"
+  - "**/*.ts"
+alwaysApply: true
+---
+
+The AMO mobile app UI must follow a Microblink-inspired design direction.
+
+Design intent:
+- clean
+- premium
+- minimal
+- professional
+- identity-focused
+- biometric
+- secure
+- healthtech/institutional
+
+Use docs/design/microblink-inspired-direction.md as the main visual reference.
+
+The app must not copy Microblink branding, logo, product names or exact layouts.
+It should only be inspired by its simplicity, spacing, card structure, typography, icon treatment and visual polish.
+
+Navigation:
+- Stack navigation only — no bottom tab bar
+- Home toolbar: menu | AMO logo | profile icon (top right)
+
+For every screen:
+- Use a very light gray background.
+- Use large readable navy titles.
+- Use uppercase green section labels (`#0E5B3B`).
+- Use white cards with large border radius.
+- Use very soft shadows.
+- Use thin separators inside grouped cards.
+- Use circular icon containers.
+- Use chevrons for navigable rows.
+- Keep screens breathable and uncluttered.
+- Prefer 1 main action per screen.
+- Avoid random colors, heavy gradients, noisy backgrounds and excessive effects.
+- Avoid cramped layouts and generic AI-looking UI.
+
+For AMO-specific screens:
+- "Identifier un assuré" should feel like BlinkID-style document/identity action.
+- "Vérifier l'éligibilité" should feel like BlinkID Verify-style validation.
+- "Scan facial" should feel like biometric verification.
+- "QR code" should feel like secure quick access.
+- "Urgence" should feel serious, clear and controlled.
+
+Before coding a UI:
+1. Describe the screen structure.
+2. List reusable components needed.
+3. Mention loading, empty, error and success states.
+
+After coding:
+1. Review spacing.
+2. Review typography.
+3. Review color consistency.
+4. Review accessibility.
+5. Improve anything that feels amateur, crowded or visually inconsistent.

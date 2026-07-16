@@ -1,0 +1,80 @@
+---
+description: Conventions React Native pour l'app mobile/tablette AMO ID Santé Mali
+globs: ["mobile/src/**/*.tsx", "mobile/src/**/*.ts", "mobile/app/**/*.tsx"]
+alwaysApply: false
+---
+
+# Règles React Native — AMO ID Mobile
+
+## Principes fondamentaux
+- Codebase unique pour smartphone et tablette — NEVER créer deux versions séparées
+- Navigation et écrans conditionnés par le rôle de l'agent connecté
+- NEVER appeler CompreFace directement depuis le mobile — ALWAYS passer par l'API NestJS
+- NEVER stocker de données médicales sensibles en clair dans SQLite local
+
+## Responsive smartphone / tablette
+ALWAYS utiliser le hook `useDeviceLayout` (à créer dans `mobile/src/hooks/`) :
+```ts
+// Renvoie : { isTablet: boolean, screenWidth: number, screenHeight: number }
+```
+- Smartphone et tablette : navigation stack depuis l'accueil hub (pas de bottom tab bar)
+- Tablette : layouts adaptés (colonnes, grilles) selon la largeur d'écran
+- NEVER utiliser des tailles fixes en px — ALWAYS utiliser des pourcentages ou `Dimensions` + `useWindowDimensions`
+
+## Structure des dossiers
+```
+mobile/src/
+  api/           ← appels HTTP vers le backend NestJS uniquement
+  components/    ← composants réutilisables
+  hooks/         ← hooks personnalisés
+  navigation/    ← structure de navigation par rôle
+  screens/       ← écrans par module métier
+  store/         ← état global (contexte ou Zustand)
+  offline/       ← cache SQLite + file d'attente de synchro
+  utils/         ← utilitaires (formatage, validation locale, etc.)
+  constants/     ← constantes de rôles, statuts, config
+```
+
+## Navigation par rôle
+ALWAYS construire la navigation en fonction du rôle retourné par le JWT :
+| Rôle | Accès |
+|---|---|
+| `AGENT_ENROLLMENT` | Enrôlement, complément dossier, capture faciale |
+| `AGENT_CARE_POINT` | Identification, vérification droits, scan QR |
+| `SUPERVISOR_ESTABLISHMENT` | Stats locales, gestion agents du site |
+| `SUPERVISOR_REGIONAL` | Suivi enrôlements, validation corrections |
+| `ADMIN` | Toutes les fonctions |
+| `AUDITOR` | Lecture seule, journaux, exports |
+
+NEVER afficher un écran non autorisé pour un rôle — bloquer au niveau du navigateur, pas seulement dans l'UI.
+
+## Capture faciale et vivacité
+ALWAYS respecter cet ordre strict avant tout envoi au serveur :
+1. Contrôle qualité local (luminosité, netteté, orientation) via ML Kit
+2. Défi de vivacité on-device (clignement ou légère rotation de tête) via ML Kit
+3. Si les deux étapes échouent → rejeter immédiatement côté app, NEVER appeler le serveur
+4. En cas de succès uniquement → envoyer l'image à `POST /biometrics/verify` ou `POST /biometrics/enroll`
+
+NEVER envoyer une image brute sans avoir passé les étapes 1 et 2.
+
+## Gestion offline
+- Cache en lecture : SQLite via `expo-sqlite` ou `op-sqlite`
+- File d'attente d'actions : table `offline_queue` en SQLite
+- ALWAYS horodater chaque action en file d'attente avec `created_at` local
+- ALWAYS vider la file via `POST /sync/flush` au retour du réseau (écouter `NetInfo`)
+- Si le serveur rejette une action (conflit) → afficher une notification à l'agent, NEVER fusionner silencieusement
+- NEVER stocker les gabarits biométriques localement
+
+## Conventions de code
+- ALWAYS TypeScript strict — pas de `any`
+- ALWAYS typer les réponses API avec des interfaces dans `mobile/src/api/types/`
+- Composants : `PascalCase`, fichiers en `kebab-case.tsx`
+- Hooks : préfixés `use`, ex. `useDeviceLayout`, `useOfflineQueue`
+- Constantes : `UPPER_SNAKE_CASE` dans `mobile/src/constants/`
+- Textes UI : ALWAYS externaliser dans `mobile/src/i18n/fr.ts` — NEVER hardcoder une chaîne visible
+
+## Sécurité mobile
+- ALWAYS stocker le JWT dans le keychain sécurisé (ex: `expo-secure-store`) — NEVER dans AsyncStorage
+- ALWAYS envoyer le `deviceId` (identifiant unique de l'appareil) dans chaque requête API via un header
+- NEVER afficher le score de confiance biométrique brut à l'agent — ALWAYS utiliser les statuts `confirmé / douteux / échec`
+- ALWAYS vider la session et le cache local à la déconnexion

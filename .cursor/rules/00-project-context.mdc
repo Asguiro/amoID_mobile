@@ -1,0 +1,26 @@
+---
+description: Contexte global du projet AMO ID Santé Mali. Chargé dans chaque conversation.
+alwaysApply: true
+---
+
+# AMO ID Santé Mali — Contexte projet
+
+## Stack technique validée
+- Backend : NestJS + Prisma → Render (free)
+- Base de données + Storage : Supabase (Postgres + Storage free)
+- Mobile : React Native (smartphone + tablette, codebase unique)
+- Reconnaissance faciale : CompreFace (Docker, Oracle Cloud Always Free)
+- Vivacité (anti-spoofing) : ML Kit on-device, côté mobile uniquement
+- Auth : JWT + PIN/OTP agent, appareils enrôlés et révocables
+- QR temporaire : JWT/JWS signé côté serveur, expiration paramétrable
+
+## Règles absolues
+- NEVER inventer une décision non documentée dans `AMO_ID_Sante_Mali_Decisions_Techniques.md` ou `Spec_AMO_ID_Sante_Mali_MVP_IA.md`
+- ALWAYS demander avant de créer un nouveau pattern non établi
+- NEVER laisser le mobile appeler CompreFace directement — TOUJOURS passer par l'API NestJS
+- NEVER stocker de photo brute après création du gabarit biométrique
+- NEVER exposer de données médicales ou biométriques dans les logs, réponses API ou QR codes
+- ALWAYS écrire en TypeScript strict — pas de `any`
+
+## Langue
+Code et commentaires en anglais. Messages utilisateur et UI en français.

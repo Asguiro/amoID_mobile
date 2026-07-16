@@ -1,0 +1,24 @@
+---
+description: Use Context7 for external library documentation
+alwaysApply: true
+---
+
+# Context7 usage
+
+When working with external libraries, frameworks, SDKs, APIs, or configuration examples, always use Context7 before proposing code.
+
+Use Context7 especially for:
+- NestJS
+- Prisma
+- Supabase
+- React Native
+- React Navigation
+- TanStack React libraries
+- ML Kit
+- JWT / JWS
+- QR code libraries
+- SQLite offline storage
+- Render deployment
+- Oracle Cloud / Docker / CompreFace setup
+
+Do not rely only on model memory for library-specific code.

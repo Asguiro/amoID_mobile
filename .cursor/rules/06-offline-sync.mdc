@@ -1,0 +1,104 @@
+---
+description: Conventions mode hors-ligne et synchronisation différée AMO ID mobile
+globs: ["mobile/src/offline/**", "mobile/src/hooks/useSync*", "mobile/src/hooks/useNetwork*", "backend/src/sync/**"]
+alwaysApply: false
+---
+
+# Règles Offline + Sync — AMO ID
+
+## Stratégie retenue pour le MVP
+Cache local en lecture seule + file d'attente d'actions.
+NEVER implémenter de synchronisation bidirectionnelle complète avec résolution de conflits dans le MVP.
+
+## Côté mobile — SQLite local
+
+### Tables SQLite locales (schéma simplifié)
+```sql
+-- Cache en lecture : derniers bénéficiaires/référentiels consultés
+CREATE TABLE beneficiary_cache (
+  id TEXT PRIMARY KEY,
+  amo_number TEXT,
+  display_name TEXT,   -- nom + prénom uniquement, pas de données médicales
+  status TEXT,
+  ouvrant_droit_id TEXT,
+  cached_at INTEGER,   -- timestamp Unix
+  expires_at INTEGER   -- timestamp Unix (TTL configurable, ex: 4h)
+);
+
+-- File d'attente des actions hors-ligne
+CREATE TABLE offline_queue (
+  id TEXT PRIMARY KEY,       -- uuid local
+  action_type TEXT NOT NULL, -- 'ENROLL' | 'VERIFY' | 'QR_REQUEST'
+  payload TEXT NOT NULL,     -- JSON sérialisé, sans données médicales en clair
+  created_at INTEGER NOT NULL,
+  status TEXT DEFAULT 'PENDING', -- 'PENDING' | 'SYNCED' | 'REJECTED'
+  error_message TEXT,
+  synced_at INTEGER
+);
+```
+
+### Règles du cache
+- NEVER mettre en cache `health_data`, gabarits biométriques ou données médicales
+- ALWAYS respecter le TTL du cache (supprimer les entrées expirées au démarrage de l'app)
+- Cache valide uniquement pour la recherche et l'affichage — NEVER prendre une décision de prise en charge sur la seule base du cache sans connexion confirmée
+
+### Règles de la file d'attente
+- ALWAYS horodater avec l'heure locale de l'action (`created_at`)
+- ALWAYS sérialiser le payload en JSON — NEVER stocker de données biométriques en clair dans la queue
+- Pour les actions d'enrôlement : stocker la référence du fichier image temporaire local, pas l'image base64 directement (économie de stockage)
+- Taille max de la queue : 50 actions (afficher un avertissement à l'agent au-delà de 40)
+
+## Déclenchement de la synchronisation
+
+### Écouter les changements réseau
+ALWAYS utiliser `@react-native-community/netinfo` :
+```ts
+NetInfo.addEventListener(state => {
+  if (state.isConnected && state.isInternetReachable) {
+    syncService.flushQueue();
+  }
+});
+```
+
+### Déclenchement manuel
+ALWAYS prévoir un bouton "Synchroniser maintenant" visible dans le header quand des actions sont en attente.
+
+## Côté backend — module `sync`
+
+### Endpoint de synchronisation
+`POST /sync/flush` — authentification JWT obligatoire (le token est en cache local)
+
+Payload attendu :
+```ts
+{
+  actions: Array<{
+    localId: string,      // uuid local pour tracking
+    actionType: string,
+    payload: object,
+    createdAt: string,    // ISO8601, heure locale de l'action
+  }>
+}
+```
+
+Réponse :
+```ts
+{
+  results: Array<{
+    localId: string,
+    status: 'SYNCED' | 'REJECTED' | 'CONFLICT',
+    reason?: string,      // présent si REJECTED ou CONFLICT
+  }>
+}
+```
+
+### Traitement serveur
+- ALWAYS traiter les actions dans l'ordre chronologique (`createdAt` ASC)
+- En cas de conflit (dossier modifié entre l'action locale et la synchro) → retourner `CONFLICT` + message explicite — NEVER fusionner silencieusement
+- ALWAYS logger chaque action synchronisée dans `audit_logs` avec `created_at` = heure locale de l'action (pas heure de synchro)
+- ALWAYS rejeter les actions dont le `createdAt` est supérieur à 48h (actions trop anciennes = risque de données périmées)
+
+## Comportement UX hors-ligne
+ALWAYS afficher clairement l'état de connexion dans l'interface :
+- Bandeau discret en haut de l'écran : `Mode hors-ligne — X action(s) en attente`
+- NEVER bloquer complètement l'app hors-ligne — permettre la consultation du cache et la mise en file d'attente
+- NEVER permettre la génération d'un QR temporaire hors-ligne (requiert une connexion — décision de sécurité)

@@ -1,0 +1,412 @@
+{
+  "brand": {
+    "name": "AMO ID Santé",
+    "slug": "amo-id-sante",
+    "baseline": "L'identité qui protège. La santé qui rassemble.",
+    "productDescription": "Application mobile d'identification biométrique, vérification QR et accès santé sécurisé.",
+    "version": "1.0.0"
+  },
+  "assets": {
+    "icon": "./assets/icons/png/icon.png",
+    "iconSvg": "./assets/icons/svg/amo-id-sante-icon.svg",
+    "iconIco": "./assets/icons/ico/amo-id-sante.ico",
+    "logoHorizontalSvg": "./assets/brand/amo-id-sante-logo-horizontal.svg",
+    "logoHorizontalPng": "./assets/brand/amo-id-sante-logo-horizontal.png",
+    "adaptiveIcon": "./assets/icons/adaptive/adaptive-icon.png",
+    "adaptiveIconForegroundLight": "./assets/icons/adaptive/adaptive-icon-foreground-white.png",
+    "adaptiveIconForegroundDark": "./assets/icons/adaptive/adaptive-icon-foreground-green.png",
+    "adaptiveIconBackground": "./assets/icons/adaptive/adaptive-icon-background.png",
+    "splashIconLight": "./assets/splash/splash-icons/splash-icon-light.png",
+    "splashIconDark": "./assets/splash/splash-icons/splash-icon-dark.png",
+    "splashFullLight": "./assets/splash/full-screen/splash-light.png",
+    "splashFullDark": "./assets/splash/full-screen/splash-dark.png",
+    "splashFullWarm": "./assets/splash/full-screen/splash-warm.png"
+  },
+  "colors": {
+    "primary": "#0E5B3B",
+    "primaryDark": "#063B28",
+    "primarySoft": "#E8F7EF",
+    "primaryMuted": "#9FC9B6",
+    "navy": "#0B1B33",
+    "navySoft": "#1A2E4A",
+    "secondary": "#D4AF37",
+    "secondarySoft": "#F6EAC2",
+    "accent": "#C62828",
+    "accentSoft": "#FBE8E8",
+    "white": "#FFFFFF",
+    "black": "#000000",
+    "graphite": "#0B1B33",
+    "text": "#0B1B33",
+    "textMuted": "#9CA3AF",
+    "border": "#E5EAF0",
+    "surface": "#FFFFFF",
+    "surfaceSoft": "#F5F7FB",
+    "surfaceCream": "#FFFDF8",
+    "success": "#18A058",
+    "successSoft": "#E8F7EF",
+    "warning": "#F59E0B",
+    "warningSoft": "#FEF3C7",
+    "danger": "#EF4444",
+    "dangerSoft": "#FEE2E2",
+    "info": "#0E5B3B",
+    "chevron": "#9CA3AF",
+    "iconCircleBg": "#E8F7EF"
+  },
+  "semanticColors": {
+    "light": {
+      "background": "#FFFFFF",
+      "backgroundAlt": "#F5F7FB",
+      "card": "#FFFFFF",
+      "cardSoft": "#E8F7EF",
+      "textPrimary": "#0B1B33",
+      "textSecondary": "#6B7280",
+      "textInverse": "#FFFFFF",
+      "primary": "#0E5B3B",
+      "primaryPressed": "#063B28",
+      "secondary": "#D4AF37",
+      "accent": "#EF4444",
+      "border": "#E5EAF0",
+      "divider": "#E5EAF0",
+      "icon": "#0E5B3B",
+      "sectionLabel": "#0E5B3B",
+      "statusBarBackground": "#F5F7FB",
+      "statusBarStyle": "dark"
+    },
+    "dark": {
+      "background": "#061F17",
+      "backgroundAlt": "#0A2E21",
+      "card": "#0D3A29",
+      "cardSoft": "#114D37",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#C7D8D0",
+      "textInverse": "#1F1F1F",
+      "primary": "#9FC9B6",
+      "primaryPressed": "#EAF4EF",
+      "secondary": "#D4AF37",
+      "accent": "#FF6B6B",
+      "border": "#1B5A43",
+      "divider": "#174936",
+      "icon": "#FFFFFF",
+      "sectionLabel": "#9FC9B6",
+      "statusBarBackground": "#0A2E21",
+      "statusBarStyle": "light"
+    }
+  },
+  "gradients": {
+    "primary": [
+      "#0E5B3B",
+      "#063B28"
+    ],
+    "splashLight": [
+      "#FFFFFF",
+      "#EAF4EF"
+    ],
+    "splashDark": [
+      "#061F17",
+      "#0E5B3B",
+      "#1F1F1F"
+    ],
+    "gold": [
+      "#F4D879",
+      "#D4AF37"
+    ]
+  },
+  "typography": {
+    "fontFamilies": {
+      "heading": "Poppins",
+      "body": "Inter",
+      "mono": "Menlo"
+    },
+    "fontWeights": {
+      "regular": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700",
+      "extrabold": "800"
+    },
+    "fontSizes": {
+      "xs": 11,
+      "sm": 12,
+      "md": 14,
+      "base": 16,
+      "lg": 18,
+      "xl": 20,
+      "xxl": 24,
+      "h3": 28,
+      "h2": 32,
+      "h1": 38,
+      "display": 46
+    },
+    "lineHeights": {
+      "xs": 14,
+      "sm": 16,
+      "md": 20,
+      "base": 24,
+      "lg": 26,
+      "xl": 30,
+      "xxl": 34,
+      "h3": 36,
+      "h2": 40,
+      "h1": 46,
+      "display": 54
+    },
+    "letterSpacing": {
+      "tight": -0.4,
+      "normal": 0,
+      "wide": 0.4,
+      "button": 0.6,
+      "caption": 0.2
+    },
+    "styles": {
+      "display": {
+        "fontFamily": "Poppins",
+        "fontSize": 46,
+        "lineHeight": 54,
+        "fontWeight": "800"
+      },
+      "h1": {
+        "fontFamily": "Poppins",
+        "fontSize": 38,
+        "lineHeight": 46,
+        "fontWeight": "700"
+      },
+      "h2": {
+        "fontFamily": "Poppins",
+        "fontSize": 32,
+        "lineHeight": 40,
+        "fontWeight": "700"
+      },
+      "h3": {
+        "fontFamily": "Poppins",
+        "fontSize": 28,
+        "lineHeight": 36,
+        "fontWeight": "600"
+      },
+      "title": {
+        "fontFamily": "Poppins",
+        "fontSize": 20,
+        "lineHeight": 30,
+        "fontWeight": "600"
+      },
+      "body": {
+        "fontFamily": "Inter",
+        "fontSize": 16,
+        "lineHeight": 24,
+        "fontWeight": "400"
+      },
+      "bodyStrong": {
+        "fontFamily": "Inter",
+        "fontSize": 16,
+        "lineHeight": 24,
+        "fontWeight": "600"
+      },
+      "caption": {
+        "fontFamily": "Inter",
+        "fontSize": 13,
+        "lineHeight": 18,
+        "fontWeight": "500"
+      },
+      "sectionTitle": {
+        "fontFamily": "Inter",
+        "fontSize": 13,
+        "lineHeight": 18,
+        "fontWeight": "700",
+        "letterSpacing": 0.8
+      },
+      "rowTitle": {
+        "fontFamily": "Inter",
+        "fontSize": 17,
+        "lineHeight": 22,
+        "fontWeight": "600"
+      },
+      "rowSubtitle": {
+        "fontFamily": "Inter",
+        "fontSize": 14,
+        "lineHeight": 20,
+        "fontWeight": "400"
+      },
+      "button": {
+        "fontFamily": "Inter",
+        "fontSize": 15,
+        "lineHeight": 20,
+        "fontWeight": "700",
+        "letterSpacing": 0.6
+      }
+    }
+  },
+  "spacing": {
+    "grid": 8,
+    "xxs": 4,
+    "xs": 8,
+    "sm": 12,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 40,
+    "section": 56,
+    "sectionGap": 28,
+    "screenHorizontal": 24,
+    "screenVertical": 24,
+    "cardPadding": 22,
+    "rowMinHeight": 72,
+    "iconCircleSize": 72
+  },
+  "radii": {
+    "none": 0,
+    "xs": 6,
+    "sm": 10,
+    "md": 14,
+    "lg": 18,
+    "xl": 24,
+    "xxl": 32,
+    "pill": 999,
+    "appIcon": 210
+  },
+  "shadows": {
+    "none": {
+      "shadowColor": "#000000",
+      "shadowOpacity": 0,
+      "shadowRadius": 0,
+      "elevation": 0
+    },
+    "sm": {
+      "shadowColor": "#0B1B33",
+      "shadowOpacity": 0.06,
+      "shadowRadius": 10,
+      "shadowOffset": {
+        "width": 0,
+        "height": 3
+      },
+      "elevation": 2
+    },
+    "md": {
+      "shadowColor": "#000000",
+      "shadowOpacity": 0.12,
+      "shadowRadius": 16,
+      "shadowOffset": {
+        "width": 0,
+        "height": 6
+      },
+      "elevation": 5
+    },
+    "lg": {
+      "shadowColor": "#000000",
+      "shadowOpacity": 0.18,
+      "shadowRadius": 24,
+      "shadowOffset": {
+        "width": 0,
+        "height": 12
+      },
+      "elevation": 8
+    }
+  },
+  "components": {
+    "button": {
+      "height": 52,
+      "borderRadius": 16,
+      "paddingHorizontal": 20,
+      "variants": {
+        "primary": {
+          "backgroundColor": "#0E5B3B",
+          "textColor": "#FFFFFF"
+        },
+        "secondary": {
+          "backgroundColor": "#D4AF37",
+          "textColor": "#1F1F1F"
+        },
+        "outline": {
+          "backgroundColor": "transparent",
+          "textColor": "#0E5B3B",
+          "borderColor": "#0E5B3B"
+        },
+        "danger": {
+          "backgroundColor": "#C62828",
+          "textColor": "#FFFFFF"
+        }
+      }
+    },
+    "input": {
+      "height": 52,
+      "borderRadius": 14,
+      "backgroundColor": "#FFFFFF",
+      "borderColor": "#D9E4DE",
+      "textColor": "#1F1F1F",
+      "placeholderColor": "#83928B",
+      "paddingHorizontal": 16
+    },
+    "card": {
+      "borderRadius": 24,
+      "backgroundColor": "#FFFFFF",
+      "padding": 22,
+      "shadow": "sm"
+    },
+    "actionRow": {
+      "minHeight": 72,
+      "iconCircleSize": 72,
+      "dividerInset": 88
+    },
+    "circleIcon": {
+      "size": 72,
+      "iconSize": 28,
+      "backgroundColor": "#E8F7EF"
+    },
+    "qrScanner": {
+      "cornerColor": "#0E5B3B",
+      "scanLineColor": "#0E5B3B",
+      "overlayColor": "rgba(11, 27, 51, 0.72)",
+      "cornerRadius": 24
+    },
+    "biometric": {
+      "faceFrameColor": "#0E5B3B",
+      "faceFrameColorDark": "#FFFFFF",
+      "successColor": "#18A058",
+      "warningColor": "#F59E0B",
+      "dangerColor": "#EF4444"
+    }
+  },
+  "navigation": {
+    "headerBackground": "#F5F7FB",
+    "headerTint": "#0E5B3B"
+  },
+  "splash": {
+    "defaultVariant": "dark",
+    "backgroundColorLight": "#FFFFFF",
+    "backgroundColorDark": "#061F17",
+    "expoImageWidth": 220,
+    "fullScreenSizes": [
+      "1080x1920",
+      "1170x2532",
+      "1242x2688",
+      "1284x2778",
+      "1440x2560"
+    ]
+  },
+  "expoConfigSnippet": {
+    "expo": {
+      "name": "AMO ID Santé",
+      "slug": "amo-id-sante",
+      "userInterfaceStyle": "automatic",
+      "icon": "./assets/icons/png/icon.png",
+      "android": {
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/icons/adaptive/adaptive-icon-foreground-white.png",
+          "backgroundColor": "#0E5B3B"
+        }
+      },
+      "plugins": [
+        [
+          "expo-splash-screen",
+          {
+            "backgroundColor": "#FFFFFF",
+            "image": "./assets/splash/splash-icons/splash-icon-light.png",
+            "imageWidth": 220,
+            "dark": {
+              "backgroundColor": "#061F17",
+              "image": "./assets/splash/splash-icons/splash-icon-dark.png"
+            }
+          }
+        ]
+      ]
+    }
+  }
+}

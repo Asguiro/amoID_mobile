@@ -1,0 +1,20 @@
+---
+description: 
+alwaysApply: true
+---
+
+Tu travailles sur AMO ID Santé Mali. Consulte toujours AGENTS.md, docs/ et .cursor/rules/ avant d’agir.
+
+Ne jamais inventer une décision non documentée.
+
+Respecte strictement :
+- le mobile ne parle jamais directement à CompreFace
+- aucune photo brute conservée après création d’un gabarit biométrique
+- aucune donnée médicale ou biométrique en clair dans les logs, réponses API ou QR codes
+- audit_logs est append-only : jamais de UPDATE ni DELETE
+- un QR temporaire ne peut jamais être validé seul sans vérification faciale couplée
+- TypeScript strict partout, sans any
+- code et commentaires en anglais
+- UI et messages utilisateur en français
+
+Pour toute librairie externe, framework, SDK, API ou configuration technique récente, utilise Context7.

@@ -1,0 +1,119 @@
+---
+description: Phase UI-only (sans backend) et conventions TanStack pour l'app mobile AMO ID
+globs: ["src/**/*.tsx", "src/**/*.ts", "App.tsx", "mobile/src/**/*.tsx", "mobile/src/**/*.ts"]
+alwaysApply: true
+---
+
+# Phase UI-only + TanStack — AMO ID Mobile
+
+## Contexte actuel
+
+Il n'y a **pas encore de backend** dans ce dépôt. La priorité est l'interface mobile :
+écrans, navigation, modals, composants visuels, layouts responsive (smartphone + tablette).
+
+Les règles absolues du projet (biométrie, QR, audit, sécurité) restent des **contraintes de conception**
+à respecter dès la conception des écrans, même avec des données mockées.
+
+## Périmètre UI-only — IN
+
+- Écrans et layouts responsive (smartphone et tablette : navigation stack depuis l'accueil hub)
+- Navigation par rôle (structure, guards, flux conditionnels)
+- Modals, bottom sheets, overlays, composants réutilisables
+- Formulaires d'enrôlement (multi-étapes, validation locale)
+- Listes, tableaux, recherche bénéficiaires (données mockées)
+- i18n français (`src/i18n/fr.ts`) — NEVER hardcoder une chaîne visible
+- États UI : loading, empty, error, success
+- Bannière offline, indicateurs de file d'attente (visuels uniquement pour l'instant)
+
+## Périmètre UI-only — OUT (pour l'instant)
+
+- Appels API réels vers NestJS
+- Intégration CompreFace ou ML Kit
+- SQLite offline et file de synchronisation réelle
+- Auth JWT réelle et keychain
+- Génération ou validation cryptographique de QR
+
+NEVER implémenter ces éléments sans demande explicite. Préparer les interfaces et types pour une bascule future.
+
+## Stratégie mock
+
+- ALWAYS séparer **UI** et **source de données** via des services mock (`src/api/mocks/`)
+- ALWAYS typer les données avec des interfaces dans `src/api/types/` — mêmes contrats que le futur backend
+- NEVER exposer de données médicales ou biométriques réelles dans les mocks ou les logs
+- Simuler les statuts métier (`confirmé / douteux / échec`, droits AMO) — NEVER afficher un score brut
+
+```ts
+// src/api/mocks/beneficiaries.mock.ts
+export const mockBeneficiaries: BeneficiarySummary[] = [/* ... */];
+```
+
+## TanStack — librairies à privilégier
+
+Consulter **Context7** avant toute implémentation TanStack.
+
+### `@tanstack/react-query` — données serveur (mockées puis réelles)
+
+- Cache, refetch, états `isPending / isError / isSuccess`
+- Phase UI : brancher sur des mock services via `queryFn`
+- Préparer les `queryKey` par domaine :
+
+| Domaine | Exemple de queryKey |
+|---|---|
+| Bénéficiaires | `['beneficiaries', 'list']`, `['beneficiaries', id]` |
+| Éligibilité | `['eligibility', beneficiaryId]` |
+| Biométrie | `['biometrics', 'verify', sessionId]` |
+| QR temporaire | `['temporary-qr', 'search']`, `['temporary-qr', 'eligibility', beneficiaryId]`, `['temporary-qr', 'generate']`, `['qr', 'status', qrId]` |
+
+ALWAYS encapsuler les appels dans des hooks dédiés (`useBeneficiaries`, `useTemporaryQr`, `useEligibility`) — NEVER appeler `useQuery` directement dans les écrans.
+
+### `@tanstack/react-form` — formulaires
+
+- Validation typée pour l'enrôlement (identité, contact, références AMO)
+- Wizard multi-étapes avec état de formulaire partagé
+- Messages d'erreur en français via i18n
+- NEVER mettre la logique métier sensible dans les composants de champ
+
+### `@tanstack/react-table` — listes tabulaires (surtout tablette)
+
+- Recherche bénéficiaires, journaux, stats locales
+- Tri, pagination, colonnes conditionnelles par rôle
+- ALWAYS masquer les colonnes non autorisées pour le rôle connecté
+
+### `@tanstack/store` — état global UI
+
+- Session mockée (rôle agent, établissement, deviceId fictif)
+- État des modals, bannière offline, compteur d'actions en attente
+- Préférer TanStack Store pour l'état UI global ; Zustand reste acceptable si déjà en place
+
+## Principes TanStack
+
+1. **Séparation des couches** : écran → hook TanStack → service (mock ou API)
+2. **Typage strict** — pas de `any` ; interfaces partagées dans `src/api/types/`
+3. **Logique métier hors composants** — hooks et services dédiés
+4. **Provider racine** : monter `QueryClientProvider` dans `App.tsx` dès l'introduction de React Query
+5. **Préparer la bascule API** : remplacer uniquement le `queryFn` / service mock — NEVER refactorer les écrans
+
+## Structure cible
+
+```
+src/
+  api/
+    types/         ← interfaces partagées (mock + futur backend)
+    mocks/         ← données et services mockés (phase UI-only)
+    services/      ← futurs appels HTTP NestJS (vide pour l'instant)
+  components/      ← composants réutilisables (modals, boutons, cartes)
+  hooks/           ← hooks TanStack Query, Form, device layout
+  navigation/      ← navigateurs par rôle
+  screens/         ← écrans par module métier
+  store/           ← TanStack Store (session UI, modals)
+  i18n/
+    fr.ts          ← tous les textes UI en français
+  constants/       ← rôles, statuts, config
+```
+
+## Rappel sécurité (même en phase UI)
+
+- NEVER afficher un score biométrique brut — statuts métier uniquement
+- NEVER mettre de données médicales en clair dans les mocks, logs ou QR simulés
+- NEVER valider un QR temporaire sans flux de vérification faciale couplée (même en démo)
+- Navigation par rôle : bloquer au niveau du navigateur, pas seulement masquer un bouton

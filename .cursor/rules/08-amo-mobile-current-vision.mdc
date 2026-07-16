@@ -1,0 +1,54 @@
+---
+description: Vision actuelle mobile AMO ID Santé Mali
+globs:
+  - "src/screens/enrollment/**/*"
+  - "src/screens/verification/**/*"
+  - "src/screens/temporary-qr/**/*"
+  - "src/screens/faceCapture/**/*"
+  - "src/api/**/*"
+  - "src/components/ui/**/*"
+alwaysApply: true
+---
+
+# Vision mobile actuelle
+
+Le backend n’est pas prêt. Le mobile doit être fonctionnel en mock.
+
+Ne pas créer d’écran “prochainement”.
+Ne pas créer d’interface décorative sans action.
+Ne pas remplacer le design system existant.
+Ne pas dupliquer les composants UI.
+
+La priorité est :
+1. interfaces propres ;
+2. navigation complète ;
+3. actions fonctionnelles ;
+4. mocks réalistes ;
+5. services typés ;
+6. future intégration API facile.
+
+Le cœur de l’application n’est pas une simple liste de bénéficiaires.
+Le cœur de l’application est :
+- enrôler une personne ;
+- vérifier une personne ;
+- générer un QR temporaire (attestation imprimable/partageable) ;
+- capturer le visage ;
+- afficher un résultat clair ;
+- gérer les cas d’échec ou de doute.
+
+Design :
+- clair ;
+- sobre ;
+- professionnel ;
+- grand espace blanc ;
+- cartes propres ;
+- boutons visibles ;
+- statuts très lisibles ;
+- pas de surcharge ;
+- inspiration Microblink uniquement dans l’expérience guidée, pas dans la copie visuelle.
+
+Sécurité :
+- aucune donnée biométrique réelle ;
+- aucune image brute ;
+- aucune donnée médicale dans les écrans de vérification ;
+- aucune API réelle tant que le backend n’est pas prêt.

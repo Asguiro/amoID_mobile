@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "AMO ID Santé",
+    "slug": "amo-id-sante",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icons/png/icon.png",
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icons/adaptive/adaptive-icon-foreground-white.png",
+        "backgroundColor": "#0E5B3B"
+      }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/splash/splash-icons/splash-icon-light.png",
+          "imageWidth": 220,
+          "dark": {
+            "backgroundColor": "#061F17",
+            "image": "./assets/splash/splash-icons/splash-icon-dark.png"
+          }
+        }
+      ]
+    ]
+  }
+}

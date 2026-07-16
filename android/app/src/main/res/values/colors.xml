@@ -1,0 +1,5 @@
+<resources>
+    <color name="bootsplash_background">#061F17</color>
+    <color name="ic_launcher_background">#0E5B3B</color>
+    <color name="status_bar_background">#F7FAF8</color>
+</resources>

@@ -1,0 +1,72 @@
+---
+description: Conventions biométrie, CompreFace et flux de vérification faciale AMO ID
+globs: ["backend/src/biometrics/**", "mobile/src/screens/biometrics/**", "mobile/src/components/camera/**"]
+alwaysApply: false
+---
+
+# Règles Biométrie + CompreFace — AMO ID
+
+## Principe cardinal
+Le mobile ne parle JAMAIS directement à CompreFace.
+Flux obligatoire : `Mobile → API NestJS (module biometrics) → CompreFace → NestJS → Mobile`
+Tout appel HTTP vers CompreFace depuis le mobile est une violation de sécurité.
+
+## Côté mobile — flux de capture
+
+### Ordre strict à respecter (NEVER sauter une étape)
+1. `CameraCapture` → image brute en mémoire
+2. `MLKitQualityCheck` → luminosité, netteté, orientation, taille du visage détecté
+   - Si échec → afficher message d'aide à l'agent → recommencer, NEVER envoyer au serveur
+3. `MLKitLivenessChallenge` → défi clignement ou rotation légère
+   - Si échec → afficher alerte "Vivacité non détectée" → recommencer, NEVER envoyer au serveur
+4. Compression + encodage base64 de l'image
+5. Appel `POST /biometrics/enroll` ou `POST /biometrics/verify` vers l'API NestJS
+6. Réception du statut : `CONFIRMED` | `UNCERTAIN` | `FAILED`
+7. Affichage du statut traduit à l'agent (voir tableau ci-dessous)
+
+### Statuts à afficher à l'agent
+NEVER afficher un score brut (ex: `0.87`). ALWAYS afficher un libellé métier :
+
+| Statut serveur | Libellé affiché |
+|---|---|
+| `CONFIRMED` | ✅ Identité confirmée |
+| `UNCERTAIN` | ⚠️ Résultat incertain — nouvelle capture recommandée |
+| `FAILED` | ❌ Identification échouée — vérification manuelle requise |
+| `NOT_FOUND` | 🔍 Bénéficiaire non trouvé dans le système |
+
+## Côté backend — module `biometrics`
+
+### Appels CompreFace
+- ALWAYS utiliser le `HttpModule` NestJS pour appeler CompreFace — NEVER `fetch` natif
+- ALWAYS encapsuler les appels dans `CompreFaceService` — NEVER appeler l'URL CompreFace directement depuis un autre service
+- ALWAYS gérer les timeouts explicitement (ex: 10s pour la comparaison 1:N)
+- ALWAYS logger les échecs CompreFace dans le module `audit` avec le code d'erreur retourné
+
+### Enrôlement
+- Recevoir l'image → envoyer à CompreFace `POST /api/v1/recognition/faces` → récupérer le `face_id`
+- Stocker en base : `{ beneficiary_id, compreface_subject_id, quality_score, device_id, agent_id, created_at }`
+- NEVER stocker la photo brute après création du gabarit — supprimer de la mémoire immédiatement
+- NEVER stocker le `face_id` CompreFace dans un champ accessible par un rôle non-biométrique
+
+### Vérification
+- Mode 1:N (identification sans indice) : `POST /api/v1/recognition/recognize`
+- Mode 1:1 (numéro AMO ou QR fourni) : `POST /api/v1/recognition/verify`
+- ALWAYS appliquer un seuil de confiance configurable (variable d'env `BIOMETRIC_THRESHOLD`, défaut `0.85`)
+  - Score ≥ seuil → `CONFIRMED`
+  - Score ≥ seuil × 0.90 → `UNCERTAIN`
+  - Score < seuil × 0.90 → `FAILED`
+- ALWAYS chaîner avec le module `eligibility` après identification réussie
+- ALWAYS écrire dans `audit_logs` : `{ agentId, beneficiaryId, action: 'BIOMETRIC_VERIFY', result, score (anonymisé), deviceId, timestamp }`
+
+### Cas d'exception (section 13 du spec)
+ALWAYS prévoir un endpoint `POST /biometrics/manual-override` :
+- Requiert le rôle `SUPERVISOR` minimum
+- Paramètre : `{ beneficiaryId, reason, justification }`
+- Log d'audit obligatoire avec la justification
+- Utilisé pour : blessure, visage bandé, appareil défaillant, cas légitimes d'échec biométrique
+
+## Sécurité biométrique
+- NEVER retourner le gabarit facial brut dans une réponse API
+- NEVER indexer le `compreface_subject_id` dans les logs visibles par les agents
+- ALWAYS chiffrer la colonne `compreface_subject_id` en base (Prisma field-level encryption ou chiffrement applicatif)
+- La collection CompreFace doit être nommée avec un identifiant opaque, pas le nom du bénéficiaire

@@ -1,0 +1,65 @@
+---
+description: Référence infrastructure et déploiement AMO ID (à invoquer manuellement avec @07-infrastructure)
+alwaysApply: false
+---
+
+# Infrastructure & Déploiement — AMO ID
+
+## Services et rôles
+
+| Service | Provider | URL / Identifiant | Rôle |
+|---|---|---|---|
+| API NestJS | Render (free) | À définir à la création | Logique métier, auth, orchestration |
+| Postgres + Storage | Supabase (free) | À définir à la création | Données persistantes + fichiers |
+| CompreFace | Oracle Cloud Always Free (ARM A1) | IP de l'instance | Moteur biométrique |
+| Docker host | Oracle Cloud (même instance) | — | Héberge les conteneurs CompreFace |
+
+## Render — points de vigilance
+- L'instance free se met en veille après 15 min d'inactivité → redémarrage 30-60s
+- NEVER utiliser le système de fichiers Render pour stocker des données persistantes (éphémère)
+- ALWAYS utiliser des variables d'environnement Render pour les secrets (NEVER un `.env` commité)
+- Health check à configurer sur `GET /health` (endpoint à créer dans NestJS)
+
+## Supabase — points de vigilance
+- Le projet se met en pause après 7 jours d'inactivité (les données ne sont PAS supprimées)
+- Pour éviter la pause : configurer une tâche de ping hebdomadaire (ex: GitHub Action cron)
+- Storage : ALWAYS utiliser des buckets en mode `private` avec signed URLs pour les fichiers
+
+## CompreFace sur Oracle Cloud Always Free
+- Instance ARM Ampere A1 : 2 OCPU / 12 Go RAM (limite actuelle juin 2026)
+- Déploiement via `docker-compose` fourni par CompreFace
+- Carte bancaire Oracle requise à la création (vérification uniquement, aucun débit en Always Free)
+- ALWAYS utiliser un firewall Oracle (Security List) pour n'exposer CompreFace qu'à l'IP de Render
+- NEVER exposer les ports CompreFace publiquement — accès restreint à l'API NestJS uniquement
+- Port par défaut CompreFace : `8000` (admin UI) + `8080` (API REST)
+
+## Variables d'environnement — liste de référence
+```env
+# NestJS
+DATABASE_URL=postgresql://...@...supabase.co:5432/postgres
+JWT_PRIVATE_KEY=...       # RS256 clé privée (PEM)
+JWT_PUBLIC_KEY=...        # RS256 clé publique (PEM)
+QR_VALIDITY_HOURS=72
+BIOMETRIC_THRESHOLD=0.85
+COMPREFACE_URL=http://<oracle-ip>:8080
+COMPREFACE_API_KEY=...
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...   # NEVER la clé anon publique côté serveur
+
+# Mobile
+API_BASE_URL=https://<render-service>.onrender.com
+OFFLINE_CACHE_TTL_HOURS=4
+OFFLINE_QUEUE_MAX_SIZE=50
+```
+
+## Checklist avant mise en production pilote
+- [ ] Firewall Oracle configuré (CompreFace inaccessible depuis l'extérieur)
+- [ ] Variables d'environnement Render vérifiées (aucun secret dans le code)
+- [ ] Bucket Supabase Storage en mode `private`
+- [ ] Health check Render configuré sur `GET /health`
+- [ ] Tâche de ping Supabase configurée (éviter la pause)
+- [ ] Clés JWT RS256 générées et rotées (jamais les clés de dev en prod)
+- [ ] Migration Prisma appliquée sur la base de prod
+- [ ] Collection CompreFace initialisée et testée
+- [ ] Compte admin CANAM créé et testé
+- [ ] Au moins un agent d'enrôlement et un appareil enrôlés
