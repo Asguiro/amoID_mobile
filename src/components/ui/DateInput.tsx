@@ -90,8 +90,8 @@ export function DateInput({
             backgroundColor: disabled ? colors.cardSoft : inputTheme.backgroundColor,
             borderColor,
             paddingHorizontal: inputTheme.paddingHorizontal,
-            opacity: disabled ? 0.7 : 1,
           },
+          disabled && styles.dimmed,
         ]}>
         <AppText
           variant="body"
@@ -144,6 +144,9 @@ const styles = StyleSheet.create({
   field: {
     borderWidth: 1,
     justifyContent: 'center',
+  },
+  dimmed: {
+    opacity: 0.7,
   },
   iosDone: {
     alignSelf: 'flex-end',

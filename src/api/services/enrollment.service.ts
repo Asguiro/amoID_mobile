@@ -1,252 +1,312 @@
-import { mockBeneficiaries } from '../mocks/beneficiaries.mock';
+import { MobileApiError, mobileRequest } from '../client';
+import {
+  buildBeneficiaryWriteBody,
+  buildRequiredFieldsSnapshot,
+  mapEnrollmentSubmissionStatus,
+  mapListItemToDossier,
+  mapMobileDossierToDetail,
+  mapFaceQualityToApi,
+  type ApiBeneficiaryListItem,
+  type ApiEnrollmentDto,
+  type ApiIdentifierCheckResponse,
+  type ApiMobileDossier,
+} from '../mappers/beneficiary.mapper';
 import type {
   BeneficiaryDossierDetail,
   BeneficiaryIdentifierCheckRequest,
   BeneficiaryIdentifierCheckResponse,
   BeneficiarySearchRequest,
   BeneficiarySearchResponse,
+  EnrollmentIdDocumentAttachment,
   EnrollmentSubmitRequest,
   EnrollmentSubmissionResult,
+  PendingEnrollmentSummary,
 } from '../types/enrollment.types';
-import type { ServiceError } from '../types/ui-state.types';
-import {
-  AmoServiceError,
-  delay,
-  isBusinessTrigger,
-  isDuplicateTrigger,
-  isNetworkTrigger,
-  isValidationTrigger,
-} from './service.utils';
+import { AmoServiceError } from './service.utils';
 
-const MOCK_DOSSIERS: BeneficiaryDossierDetail[] = mockBeneficiaries.map(
-  (beneficiary, index) => ({
-    id: beneficiary.id,
-    amoNumber: beneficiary.amoNumber,
-    nina: beneficiary.nina,
-    biometricCardNumber: beneficiary.biometricCardNumber,
-    firstName: beneficiary.firstName,
-    lastName: beneficiary.lastName,
-    birthDate: beneficiary.birthDate,
-    phone: index === 0 ? '+223 76 12 34 56' : '+223 65 98 76 54',
-    address: index === 0 ? 'Hippodrome, Bamako' : 'Quartier Médine, Bamako',
-    coverageStatus: beneficiary.coverageStatus,
-    beneficiaryType: beneficiary.beneficiaryType,
-    establishmentName: beneficiary.establishmentName,
-    dossierStatus: beneficiary.dossierStatus,
-    hasBiometrics: beneficiary.dossierStatus === 'complete' && index !== 1,
-    hasHealthInfo: index === 0,
-    lastVerifiedAt: beneficiary.lastVerifiedAt,
-  }),
-);
-
-function normalizeIdentifier(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function filterDossiers(query: string): BeneficiaryDossierDetail[] {
-  const normalizedQuery = normalizeIdentifier(query);
-
-  if (!normalizedQuery) {
-    return MOCK_DOSSIERS;
+function mapApiError(error: unknown): never {
+  if (error instanceof AmoServiceError) {
+    throw error;
   }
 
-  return MOCK_DOSSIERS.filter(dossier => {
-    const haystack = [
-      dossier.firstName,
-      dossier.lastName,
-      dossier.amoNumber,
-      dossier.phone,
-      dossier.nina,
-      dossier.biometricCardNumber,
-    ]
-      .join(' ')
-      .toLowerCase();
-
-    return haystack.includes(normalizedQuery);
-  });
-}
-
-function findByIdentifier(
-  identifierType: BeneficiaryIdentifierCheckRequest['identifierType'],
-  identifier: string,
-): BeneficiaryDossierDetail | undefined {
-  const normalized = normalizeIdentifier(identifier);
-
-  return MOCK_DOSSIERS.find(dossier => {
-    if (identifierType === 'nina') {
-      return normalizeIdentifier(dossier.nina) === normalized;
+  if (error instanceof MobileApiError) {
+    if (error.status === 0 || error.code.startsWith('HTTP_5')) {
+      throw new AmoServiceError('NETWORK', error.message);
     }
-
-    return normalizeIdentifier(dossier.biometricCardNumber) === normalized;
-  });
-}
-
-function findPossibleDuplicates(
-  identifierType: BeneficiaryIdentifierCheckRequest['identifierType'],
-  identifier: string,
-): BeneficiaryDossierDetail[] {
-  const normalized = normalizeIdentifier(identifier);
-  const partial = normalized.replace(/[^a-z0-9]/g, '').slice(0, 6);
-
-  if (!partial) {
-    return MOCK_DOSSIERS.slice(0, 2);
+    if (error.status === 400 || error.status === 422) {
+      throw new AmoServiceError('VALIDATION', error.message);
+    }
+    if (error.status === 404) {
+      throw new AmoServiceError('NOT_FOUND', error.message);
+    }
+    throw new AmoServiceError('BUSINESS', error.message);
   }
 
-  return MOCK_DOSSIERS.filter(dossier => {
-    const values =
-      identifierType === 'nina'
-        ? [dossier.nina, dossier.lastName]
-        : [dossier.biometricCardNumber, dossier.lastName];
-
-    return values.some(value =>
-      normalizeIdentifier(value).replace(/[^a-z0-9]/g, '').includes(partial),
+  if (error instanceof TypeError) {
+    throw new AmoServiceError(
+      'NETWORK',
+      'Connexion impossible. Vérifiez le réseau.',
     );
+  }
+
+  throw new AmoServiceError(
+    'BUSINESS',
+    error instanceof Error ? error.message : 'Erreur inattendue.',
+  );
+}
+
+async function resolveBase64(
+  attachment: EnrollmentIdDocumentAttachment,
+): Promise<string> {
+  if (attachment.contentBase64) {
+    return attachment.contentBase64;
+  }
+
+  const response = await fetch(attachment.uri);
+  const blob = await response.blob();
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Lecture du document impossible.'));
+        return;
+      }
+      const base64 = result.includes(',') ? result.split(',')[1] : result;
+      resolve(base64 ?? '');
+    };
+    reader.onerror = () => reject(new Error('Lecture du document impossible.'));
+    reader.readAsDataURL(blob);
   });
 }
 
-function validateRequiredFields(
-  request: EnrollmentSubmitRequest,
-): ServiceError | null {
-  const { requiredFields } = request;
+async function fetchDossierOrThrow(
+  beneficiaryId: string,
+): Promise<BeneficiaryDossierDetail> {
+  const dossier = await mobileRequest<ApiMobileDossier>(
+    `/mobile/beneficiaries/${beneficiaryId}`,
+  );
+  return mapMobileDossierToDetail(dossier);
+}
 
-  if (!requiredFields.firstName.trim()) {
-    return { code: 'VALIDATION', message: 'Le prénom est obligatoire.' };
-  }
-  if (!requiredFields.lastName.trim()) {
-    return { code: 'VALIDATION', message: 'Le nom est obligatoire.' };
-  }
-  if (!requiredFields.birthDate.trim()) {
-    return { code: 'VALIDATION', message: 'La date de naissance est obligatoire.' };
-  }
-  if (!requiredFields.phoneNumber.trim()) {
-    return { code: 'VALIDATION', message: 'Le téléphone est obligatoire.' };
-  }
-  if (!requiredFields.address.trim()) {
-    return { code: 'VALIDATION', message: 'L’adresse est obligatoire.' };
-  }
-  if (!requiredFields.beneficiaryType) {
-    return { code: 'VALIDATION', message: 'Le type de bénéficiaire est obligatoire.' };
+async function checkViaIdentifierApi(
+  request: BeneficiaryIdentifierCheckRequest,
+): Promise<BeneficiaryIdentifierCheckResponse> {
+  const body =
+    request.identifierType === 'nina'
+      ? { nina: request.identifier.trim() }
+      : { amoNumber: request.identifier.trim() };
+
+  const response = await mobileRequest<ApiIdentifierCheckResponse>(
+    '/mobile/beneficiaries/identifier-check',
+    { method: 'POST', body },
+  );
+
+  if (!response.exists || response.matches.length === 0) {
+    return { status: 'not_found' };
   }
 
-  return null;
+  const dossiers = await Promise.all(
+    response.matches.slice(0, 5).map(match => fetchDossierOrThrow(match.id)),
+  );
+
+  if (dossiers.length === 1) {
+    return { status: 'existing', beneficiary: dossiers[0] };
+  }
+
+  return { status: 'possible_duplicate', possibleMatches: dossiers };
+}
+
+async function checkViaSearch(
+  identifier: string,
+): Promise<BeneficiaryIdentifierCheckResponse> {
+  const rows = await mobileRequest<ApiBeneficiaryListItem[]>(
+    `/mobile/beneficiaries/search?q=${encodeURIComponent(identifier.trim())}`,
+  );
+
+  if (!rows.length) {
+    return { status: 'not_found' };
+  }
+
+  const dossiers = await Promise.all(
+    rows.slice(0, 5).map(row => fetchDossierOrThrow(row.id)),
+  );
+
+  if (dossiers.length === 1) {
+    return { status: 'existing', beneficiary: dossiers[0] };
+  }
+
+  return { status: 'possible_duplicate', possibleMatches: dossiers };
+}
+
+async function uploadIdDocument(
+  beneficiaryId: string,
+  attachment: EnrollmentIdDocumentAttachment,
+): Promise<void> {
+  const contentBase64 = await resolveBase64(attachment);
+
+  await mobileRequest(`/mobile/beneficiaries/${beneficiaryId}/media`, {
+    method: 'POST',
+    body: {
+      kind: 'ID_DOCUMENT',
+      label: attachment.label ?? 'Pièce d’identité',
+      contentBase64,
+      mimeType: attachment.mimeType,
+      fileName: attachment.fileName,
+    },
+  });
 }
 
 export const enrollmentService = {
   async checkBeneficiaryIdentifier(
     request: BeneficiaryIdentifierCheckRequest,
   ): Promise<BeneficiaryIdentifierCheckResponse> {
-    await delay(600);
+    try {
+      if (!request.identifier.trim()) {
+        throw new AmoServiceError(
+          'VALIDATION',
+          'Saisissez un NINA ou un numéro de carte biométrique.',
+        );
+      }
 
-    if (isNetworkTrigger(request.identifier)) {
-      throw new AmoServiceError(
-        'NETWORK',
-        'Connexion impossible. Vérifiez le réseau.',
-      );
+      // L’API identifier-check couvre NINA / AMO / téléphone.
+      // Pour la carte biométrique, on bascule sur la recherche textuelle.
+      if (request.identifierType === 'biometric_card') {
+        return await checkViaSearch(request.identifier);
+      }
+
+      return await checkViaIdentifierApi(request);
+    } catch (error) {
+      mapApiError(error);
     }
-
-    if (!request.identifier.trim()) {
-      throw new AmoServiceError(
-        'VALIDATION',
-        'Saisissez un NINA ou un numéro de carte biométrique.',
-      );
-    }
-
-    if (isDuplicateTrigger(request.identifier)) {
-      return {
-        status: 'possible_duplicate',
-        possibleMatches: findPossibleDuplicates(
-          request.identifierType,
-          request.identifier,
-        ),
-      };
-    }
-
-    const beneficiary = findByIdentifier(request.identifierType, request.identifier);
-
-    if (!beneficiary) {
-      return { status: 'not_found' };
-    }
-
-    return { status: 'existing', beneficiary };
   },
 
   async searchBeneficiaries(
     request: BeneficiarySearchRequest,
   ): Promise<BeneficiarySearchResponse> {
-    await delay(700);
-
-    if (isNetworkTrigger(request.query)) {
-      throw new AmoServiceError(
-        'NETWORK',
-        'Connexion impossible. Vérifiez le réseau.',
-      );
+    try {
+      const query = request.query.trim();
+      const path = query
+        ? `/mobile/beneficiaries/search?q=${encodeURIComponent(query)}`
+        : '/mobile/beneficiaries/search';
+      const rows = await mobileRequest<ApiBeneficiaryListItem[]>(path);
+      return { results: rows.map(mapListItemToDossier) };
+    } catch (error) {
+      mapApiError(error);
     }
+  },
 
-    return {
-      results: filterDossiers(request.query),
-    };
+  async listBeneficiaries(): Promise<BeneficiaryDossierDetail[]> {
+    try {
+      const rows = await mobileRequest<ApiBeneficiaryListItem[]>(
+        '/mobile/beneficiaries/search',
+      );
+      return rows.map(mapListItemToDossier);
+    } catch (error) {
+      mapApiError(error);
+    }
   },
 
   async getBeneficiaryDossier(
     beneficiaryId: string,
   ): Promise<BeneficiaryDossierDetail> {
-    await delay(400);
-
-    const dossier = MOCK_DOSSIERS.find(item => item.id === beneficiaryId);
-
-    if (!dossier) {
-      throw new AmoServiceError('NOT_FOUND', 'Dossier introuvable.');
+    try {
+      if (!beneficiaryId) {
+        throw new AmoServiceError('NOT_FOUND', 'Dossier introuvable.');
+      }
+      return await fetchDossierOrThrow(beneficiaryId);
+    } catch (error) {
+      mapApiError(error);
     }
+  },
 
-    return dossier;
+  async listMyEnrollments(): Promise<PendingEnrollmentSummary[]> {
+    try {
+      const response = await mobileRequest<{
+        items?: ApiEnrollmentDto[];
+      }>('/mobile/enrollments/mine');
+
+      return (response.items ?? []).map(item => ({
+        id: item.id,
+        beneficiaryName: item.beneficiaryName ?? '',
+        createdAt: item.submittedAt ?? new Date().toISOString(),
+        status: mapEnrollmentSubmissionStatus(item),
+      }));
+    } catch (error) {
+      mapApiError(error);
+    }
   },
 
   async submitEnrollment(
     request: EnrollmentSubmitRequest,
   ): Promise<EnrollmentSubmissionResult> {
-    await delay(900);
+    try {
+      if (request.forceOffline) {
+        throw new AmoServiceError(
+          'NETWORK',
+          'Démo hors ligne : soumission simulée en échec réseau.',
+        );
+      }
 
-    if (request.forceOffline || isNetworkTrigger(request.requiredFields.phoneNumber)) {
-      throw new AmoServiceError(
-        'NETWORK',
-        'Soumission impossible hors ligne. Le dossier sera mis en file d’attente.',
+      if (request.faceCapture.businessStatus !== 'captured') {
+        throw new AmoServiceError(
+          'VALIDATION',
+          'La capture faciale doit être validée avant soumission.',
+        );
+      }
+
+      const writeBody = buildBeneficiaryWriteBody(
+        request.requiredFields,
+        request.healthFields,
+        request.healthConsentAccepted,
       );
-    }
 
-    if (isValidationTrigger(request.requiredFields.firstName)) {
-      throw new AmoServiceError(
-        'VALIDATION',
-        'Certaines informations obligatoires sont invalides.',
+      let beneficiaryId = request.beneficiaryId;
+
+      if (beneficiaryId) {
+        await mobileRequest<ApiMobileDossier>(
+          `/mobile/beneficiaries/${beneficiaryId}`,
+          { method: 'PATCH', body: writeBody },
+        );
+      } else {
+        const created = await mobileRequest<ApiMobileDossier>(
+          '/mobile/beneficiaries',
+          { method: 'POST', body: writeBody },
+        );
+        beneficiaryId = created.id;
+      }
+
+      if (request.idDocument) {
+        await uploadIdDocument(beneficiaryId, request.idDocument);
+      }
+
+      const enrollment = await mobileRequest<ApiEnrollmentDto>(
+        '/mobile/enrollments',
+        {
+          method: 'POST',
+          body: {
+            beneficiaryId,
+            biometricsMissing: true,
+            faceCaptureSessionId: request.faceCapture.sessionId || undefined,
+            faceQualityLabel: mapFaceQualityToApi(
+              request.faceCapture.qualityLabel,
+            ),
+            healthConsentAccepted: request.healthConsentAccepted,
+            requiredFields: buildRequiredFieldsSnapshot(request.requiredFields),
+            isProvisional: request.isProvisional,
+          },
+        },
       );
+
+      return {
+        dossierId: enrollment.beneficiaryId || beneficiaryId,
+        enrollmentId: enrollment.id,
+        status: mapEnrollmentSubmissionStatus(enrollment),
+        submittedAt: enrollment.submittedAt ?? new Date().toISOString(),
+      };
+    } catch (error) {
+      mapApiError(error);
     }
-
-    if (isBusinessTrigger(request.requiredFields.lastName)) {
-      throw new AmoServiceError(
-        'BUSINESS',
-        'Ce dossier ne peut pas être soumis dans l’état actuel.',
-      );
-    }
-
-    const validationError = validateRequiredFields(request);
-    if (validationError) {
-      throw new AmoServiceError(validationError.code, validationError.message);
-    }
-
-    if (request.faceCapture.businessStatus !== 'captured') {
-      throw new AmoServiceError(
-        'VALIDATION',
-        'La capture faciale doit être validée avant soumission.',
-      );
-    }
-
-    const dossierId = request.beneficiaryId ?? `draft-${Date.now()}`;
-    const status: EnrollmentSubmissionResult['status'] =
-      request.isProvisional ? 'validation_pending' : 'synced';
-
-    return {
-      dossierId,
-      status,
-      submittedAt: new Date().toISOString(),
-    };
   },
 };

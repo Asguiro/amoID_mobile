@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ServiceUiState } from '../../api/types/ui-state.types';
@@ -41,6 +42,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   TemporaryQrStackParamList,
@@ -155,7 +157,7 @@ export function TemporaryQrSearchScreen() {
           autoCapitalize="none"
           returnKeyType="search"
           onSubmitEditing={() => {
-            void handleSearch();
+            runAsync(() => handleSearch());
           }}
         />
         <AppButton
@@ -166,7 +168,7 @@ export function TemporaryQrSearchScreen() {
           }
           fullWidth
           onPress={() => {
-            void handleSearch();
+            runAsync(() => handleSearch());
           }}
           disabled={searchMutation.isPending}
         />
@@ -183,11 +185,11 @@ export function TemporaryQrSearchScreen() {
             message={errorMessage}
             onRetry={() => {
               if (selectedBeneficiary) {
-                void handleContinue();
+                runAsync(() => handleContinue());
                 return;
               }
 
-              void handleSearch();
+              runAsync(() => handleSearch());
             }}
           />
         </FlowSection>
@@ -209,7 +211,7 @@ export function TemporaryQrSearchScreen() {
             <AppCard
               key={beneficiary.id}
               variant={selectedBeneficiary?.id === beneficiary.id ? 'elevated' : 'soft'}
-              style={{ marginBottom: 8, paddingVertical: 4 }}>
+              style={styles.resultCard}>
               <ActionRow
                 title={`${beneficiary.firstName} ${beneficiary.lastName}`}
                 subtitle={beneficiary.amoNumber}
@@ -251,7 +253,7 @@ export function TemporaryQrSearchScreen() {
               label={t('temporaryQr.search.continue')}
               fullWidth
               onPress={() => {
-                void handleContinue();
+                runAsync(() => handleContinue());
               }}
               disabled={eligibilityMutation.isPending}
             />
@@ -261,3 +263,10 @@ export function TemporaryQrSearchScreen() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  resultCard: {
+    marginBottom: 8,
+    paddingVertical: 4,
+  },
+});

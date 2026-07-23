@@ -32,6 +32,7 @@ import {
   mapPhaseToScanStatus,
   mapPhaseToStatusLabelKey,
 } from '../face-capture/faceCapture.utils';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   TemporaryQrStackParamList,
@@ -89,7 +90,7 @@ export function TemporaryQrFaceCaptureScreen() {
   } = useBiometricCapture({
     mode: 'verification',
     onCompleted: result => {
-      void handleCompleted(result);
+      runAsync(() => handleCompleted(result));
     },
   });
 

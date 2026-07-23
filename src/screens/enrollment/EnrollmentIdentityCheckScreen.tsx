@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type {
@@ -35,6 +35,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   EnrollmentStackParamList,
@@ -153,6 +154,10 @@ export function EnrollmentIdentityCheckScreen() {
     navigation.navigate(ENROLLMENT_ROUTES.PROVISIONAL);
   };
 
+  const handleOpenSearch = () => {
+    navigation.navigate(ENROLLMENT_ROUTES.SEARCH);
+  };
+
   const canVerify = identifier.trim().length > 0;
 
   return (
@@ -183,8 +188,8 @@ export function EnrollmentIdentityCheckScreen() {
                   {
                     borderColor: isActive ? colors.primary : colors.border,
                     backgroundColor: isActive ? colors.cardSoft : colors.card,
-                    opacity: isVerifying ? 0.6 : 1,
                   },
+                  isVerifying && styles.dimmed,
                 ]}>
                 <AppText
                   variant="bodyStrong"
@@ -209,7 +214,7 @@ export function EnrollmentIdentityCheckScreen() {
           autoCorrect={false}
           returnKeyType="done"
           editable={!isVerifying}
-          onSubmitEditing={() => void handleVerify()}
+          onSubmitEditing={() => { runAsync(() => handleVerify()); }}
         />
       </FlowSection>
 
@@ -233,7 +238,14 @@ export function EnrollmentIdentityCheckScreen() {
           fullWidth
           loading={isVerifying}
           disabled={!canVerify}
-          onPress={() => void handleVerify()}
+          onPress={() => { runAsync(() => handleVerify()); }}
+        />
+        <AppButton
+          label={t('enrollment.identityCheck.openSearch')}
+          variant="outline"
+          fullWidth
+          disabled={isVerifying}
+          onPress={handleOpenSearch}
         />
       </FlowFooter>
 
@@ -242,7 +254,7 @@ export function EnrollmentIdentityCheckScreen() {
       uiState === 'ERROR_VALIDATION' ? (
         <FlowSection>
           <SectionTitle title={t('enrollment.identityCheck.networkTitle')} />
-          <ErrorState message={errorMessage} onRetry={() => void handleVerify()} />
+          <ErrorState message={errorMessage} onRetry={() => { runAsync(() => handleVerify()); }} />
           {uiState === 'ERROR_RESEAU' ? (
             <AppButton
               label={t('enrollment.identityCheck.createProvisional')}
@@ -330,3 +342,9 @@ export function EnrollmentIdentityCheckScreen() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  dimmed: {
+    opacity: 0.6,
+  },
+});

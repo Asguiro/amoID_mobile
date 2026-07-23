@@ -78,8 +78,8 @@ export function AppTextInput({
             borderColor,
             color: inputTheme.textColor,
             paddingHorizontal: inputTheme.paddingHorizontal,
-            opacity: editable ? 1 : 0.7,
           },
+          !editable && styles.dimmed,
           style,
         ]}
         {...inputProps}
@@ -112,6 +112,9 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     fontSize: 16,
+  },
+  dimmed: {
+    opacity: 0.7,
   },
   feedback: {
     marginTop: 2,

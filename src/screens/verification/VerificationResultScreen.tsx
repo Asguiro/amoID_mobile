@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ServiceUiState } from '../../api/types/ui-state.types';
@@ -9,7 +8,6 @@ import {
   AppHeader,
   AppScreen,
   AppText,
-  AppTextInput,
   BeneficiaryIdentityCard,
   EmptyState,
   ErrorState,
@@ -17,7 +15,7 @@ import {
   SectionTitle,
   StatusBadge,
 } from '../../components/ui';
-import { FlowFooter, FlowIntro, FlowSection } from '../../components/layout/FlowLayout';
+import { FlowFooter, FlowSection } from '../../components/layout/FlowLayout';
 import { VERIFICATION_ROUTES } from '../../constants/routes';
 import { useSession } from '../../hooks/useSession';
 import { useVerificationDecision } from '../../hooks/useVerification';
@@ -31,6 +29,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   VerificationStackParamList,
@@ -178,21 +177,21 @@ export function VerificationResultScreen() {
         <AppButton
           label={t('verification.result.confirm')}
           fullWidth
-          onPress={() => void recordDecision('confirm')}
+          onPress={() => { runAsync(() => recordDecision('confirm')); }}
           disabled={match.status === 'not_found' || uiState === 'LOADING'}
         />
         <AppButton
           label={t('verification.result.reject')}
           variant="outline"
           fullWidth
-          onPress={() => void recordDecision('reject')}
+          onPress={() => { runAsync(() => recordDecision('reject')); }}
           disabled={uiState === 'LOADING'}
         />
         <AppButton
           label={t('verification.result.manual')}
           variant="secondary"
           fullWidth
-          onPress={() => void recordDecision('manual')}
+          onPress={() => { runAsync(() => recordDecision('manual')); }}
           disabled={uiState === 'LOADING'}
         />
       </FlowFooter>

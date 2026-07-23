@@ -38,6 +38,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   IdentificationStackParamList,
@@ -259,7 +260,7 @@ export function IdentificationResultScreen() {
                 variant="secondary"
                 fullWidth
                 onPress={() => {
-                  void handleLogCare();
+                  runAsync(() => handleLogCare());
                 }}
                 disabled={uiState === 'LOADING'}
               />

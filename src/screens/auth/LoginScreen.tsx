@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { loginWithApi, mapAuthErrorCode } from '../../api/services/auth.service';
 import { MobileApiError } from '../../api/client';
@@ -187,7 +187,7 @@ export function LoginScreen() {
 
       <View style={[flow.trustBanner, { backgroundColor: `${tokens.colors.info}10` }]}>
         <SecurityShield color={tokens.colors.info} />
-        <AppText variant="caption" color={tokens.colors.info} style={{ flex: 1, lineHeight: 18 }}>
+        <AppText variant="caption" color={tokens.colors.info} style={styles.trustText}>
           {t('auth.securityNote')}
         </AppText>
       </View>
@@ -201,3 +201,10 @@ export function LoginScreen() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  trustText: {
+    flex: 1,
+    lineHeight: 18,
+  },
+});

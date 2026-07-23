@@ -1,3 +1,7 @@
+/**
+ * Mobile dossier status values used in UI.
+ * API returns COMPLETE / INCOMPLETE — map via beneficiary.mapper.
+ */
 export type BeneficiaryCoverageStatus =
   | 'active'
   | 'suspended'

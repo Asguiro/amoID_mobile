@@ -3,6 +3,8 @@ import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BeneficiaryDossierDetail } from '../../api/types/enrollment.types';
+import type { ServiceUiState } from '../../api/types/ui-state.types';
+import { enrollmentService } from '../../api/services/enrollment.service';
 import {
   AppButton,
   AppCard,
@@ -30,7 +32,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
-import type { ServiceUiState } from '../../api/types/ui-state.types';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   EnrollmentStackParamList,
@@ -47,6 +49,7 @@ export function BeneficiarySearchScreen() {
   const [results, setResults] = useState<BeneficiaryDossierDetail[]>([]);
   const [uiState, setUiState] = useState<ServiceUiState>('IDLE');
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [selectingId, setSelectingId] = useState<string | null>(null);
 
   const handleSearch = async () => {
     setUiState('LOADING');
@@ -63,11 +66,22 @@ export function BeneficiarySearchScreen() {
     }
   };
 
-  const handleSelect = (dossier: BeneficiaryDossierDetail) => {
-    selectEnrollmentDossier(dossier);
-    navigation.navigate(ENROLLMENT_ROUTES.DOSSIER, {
-      beneficiaryId: dossier.id,
-    });
+  const handleSelect = async (dossier: BeneficiaryDossierDetail) => {
+    setSelectingId(dossier.id);
+    setErrorMessage(undefined);
+
+    try {
+      const fullDossier = await enrollmentService.getBeneficiaryDossier(dossier.id);
+      selectEnrollmentDossier(fullDossier);
+      navigation.navigate(ENROLLMENT_ROUTES.DOSSIER, {
+        beneficiaryId: fullDossier.id,
+      });
+    } catch (error) {
+      setUiState(mapServiceErrorToUiState(error));
+      setErrorMessage(getServiceErrorMessage(error));
+    } finally {
+      setSelectingId(null);
+    }
   };
 
   const handleCreateProvisional = () => {
@@ -89,7 +103,7 @@ export function BeneficiarySearchScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"
-          onSubmitEditing={() => void handleSearch()}
+          onSubmitEditing={() => { runAsync(() => handleSearch()); }}
         />
       </FlowSection>
 
@@ -98,15 +112,17 @@ export function BeneficiarySearchScreen() {
           label={t('enrollment.search.submit')}
           fullWidth
           loading={uiState === 'LOADING'}
-          onPress={() => void handleSearch()}
+          onPress={() => { runAsync(() => handleSearch()); }}
         />
       </FlowFooter>
 
-      {uiState === 'ERROR_RESEAU' ? (
+      {uiState === 'ERROR_RESEAU' ||
+      uiState === 'ERROR_METIER' ||
+      uiState === 'ERROR_VALIDATION' ? (
         <FlowSection>
           <ErrorState
             message={errorMessage}
-            onRetry={() => void handleSearch()}
+            onRetry={() => { runAsync(() => handleSearch()); }}
           />
         </FlowSection>
       ) : null}
@@ -140,7 +156,9 @@ export function BeneficiarySearchScreen() {
               <BeneficiaryIdentityCard
                 key={dossier.id}
                 beneficiary={dossier}
-                onPress={() => handleSelect(dossier)}
+                onPress={
+                  selectingId ? undefined : () => { runAsync(() => handleSelect(dossier)); }
+                }
               />
             ))}
           </View>

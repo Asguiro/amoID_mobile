@@ -13,7 +13,7 @@ export interface StepIndicatorProps {
  * Wizard progress label — e.g. "Étape 2/5".
  */
 export function StepIndicator({ currentStep, totalSteps, style }: StepIndicatorProps) {
-  const { tokens, colors } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
 
   return (

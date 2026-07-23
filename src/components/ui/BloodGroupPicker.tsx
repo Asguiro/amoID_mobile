@@ -46,8 +46,8 @@ export function BloodGroupPicker({
                 {
                   borderColor: isSelected ? colors.primary : colors.border,
                   backgroundColor: isSelected ? colors.cardSoft : colors.card,
-                  opacity: disabled ? 0.6 : 1,
                 },
+                disabled && styles.dimmed,
               ]}>
               <AppText
                 variant="bodyStrong"
@@ -98,6 +98,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dimmed: {
+    opacity: 0.6,
   },
   unknownChip: {
     alignSelf: 'flex-start',

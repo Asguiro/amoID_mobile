@@ -1,4 +1,5 @@
-import { Text, type StyleProp, type TextStyle } from 'react-native';
+import { useMemo } from 'react';
+import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 
 export type AppTextVariant =
@@ -42,23 +43,34 @@ export function AppText({
   const { tokens, colors } = useTheme();
   const typography = tokens.typography.styles[variant];
 
+  const variantStyle = useMemo(
+    () => ({
+      color: color ?? colors.textPrimary,
+      fontSize: typography.fontSize,
+      lineHeight: typography.lineHeight,
+      fontWeight: typography.fontWeight as TextStyle['fontWeight'],
+      letterSpacing:
+        'letterSpacing' in typography ? typography.letterSpacing : undefined,
+    }),
+    [color, colors.textPrimary, typography],
+  );
+
   return (
     <Text
       accessibilityRole={accessibilityRole ?? (variant.startsWith('h') ? 'header' : 'text')}
       numberOfLines={numberOfLines}
       style={[
-        {
-          color: color ?? colors.textPrimary,
-          fontSize: typography.fontSize,
-          lineHeight: typography.lineHeight,
-          fontWeight: typography.fontWeight as TextStyle['fontWeight'],
-          letterSpacing:
-            'letterSpacing' in typography ? typography.letterSpacing : undefined,
-          textTransform: variant === 'sectionTitle' ? 'uppercase' : undefined,
-        },
+        variantStyle,
+        variant === 'sectionTitle' && styles.uppercase,
         style,
       ]}>
       {children}
     </Text>
   );
 }
+
+const styles = StyleSheet.create({
+  uppercase: {
+    textTransform: 'uppercase',
+  },
+});

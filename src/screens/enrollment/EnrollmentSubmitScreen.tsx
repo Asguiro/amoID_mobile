@@ -28,6 +28,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   EnrollmentStackParamList,
@@ -64,6 +65,7 @@ export function EnrollmentSubmitScreen() {
         healthFields: draft.healthFields,
         healthConsentAccepted: draft.healthConsentAccepted,
         faceCapture: draft.faceCaptureResult,
+        idDocument: draft.idDocument,
         forceOffline: draft.forceOfflineSubmit,
       });
 
@@ -129,7 +131,7 @@ export function EnrollmentSubmitScreen() {
             <AppButton
               label={t('enrollment.submit.confirm')}
               fullWidth
-              onPress={() => void handleSubmit()}
+              onPress={() => { runAsync(() => handleSubmit()); }}
             />
           </FlowFooter>
         </>

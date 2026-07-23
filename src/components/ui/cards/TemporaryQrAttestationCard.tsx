@@ -25,7 +25,7 @@ function maskAmoNumber(amoNumber: string): string {
 export const TemporaryQrAttestationCard = forwardRef<
   View,
   TemporaryQrAttestationCardProps
->(function TemporaryQrAttestationCard({ token }, ref) {
+>(function TemporaryQrAttestationCardInner({ token }, ref) {
   const { t } = useTranslation();
   const { colors, tokens } = useTheme();
 

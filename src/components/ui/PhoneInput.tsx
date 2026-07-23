@@ -81,8 +81,8 @@ export function PhoneInput({
               backgroundColor: colors.cardSoft,
               borderColor,
               paddingHorizontal: inputTheme.paddingHorizontal,
-              opacity: canChangeCountry ? 1 : 0.7,
             },
+            !canChangeCountry && styles.dimmed,
           ]}>
           <AppText variant="bodyStrong" style={styles.flag}>
             {selectedCountry.flag}
@@ -114,8 +114,8 @@ export function PhoneInput({
               borderColor,
               color: inputTheme.textColor,
               paddingHorizontal: inputTheme.paddingHorizontal,
-              opacity: disabled ? 0.7 : 1,
             },
+            disabled && styles.dimmed,
           ]}
         />
       </View>
@@ -208,6 +208,9 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     fontSize: 16,
+  },
+  dimmed: {
+    opacity: 0.7,
   },
   feedback: {
     marginTop: 2,

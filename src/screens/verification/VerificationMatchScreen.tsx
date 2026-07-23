@@ -26,6 +26,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   IdentificationStackParamList,
@@ -75,7 +76,7 @@ export function VerificationMatchScreen() {
   };
 
   useEffect(() => {
-    void runMatch();
+    runAsync(() => runMatch());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -87,7 +88,7 @@ export function VerificationMatchScreen() {
 
       {uiState === 'ERROR_RESEAU' || uiState === 'ERROR_METIER' ? (
         <>
-          <ErrorState message={errorMessage} onRetry={() => void runMatch()} />
+          <ErrorState message={errorMessage} onRetry={() => { runAsync(() => runMatch()); }} />
           <FlowFooter>
             <AppButton
               label={t('verification.match.fallbackSearch')}

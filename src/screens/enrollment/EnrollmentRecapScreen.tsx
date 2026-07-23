@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,10 +17,18 @@ import { ENROLLMENT_ROUTES } from '../../constants/routes';
 import { useEnrollmentDraft } from '../../hooks/useEnrollmentDraft';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { EnrollmentStackParamList } from '../../navigation/flow-types';
+import {
+  setEnrollmentIdDocument,
+} from '../../store/enrollment-draft.store';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useFlowStyles } from '../../theme/useFlowStyles';
 import { formatDisplayDate } from '../../utils/formatDate';
+import {
+  DocumentPickCancelledError,
+  pickIdDocumentAttachment,
+} from '../../utils/pickIdDocument';
 import { formatEnrollmentPhone } from './enrollment.validation';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   EnrollmentStackParamList,
@@ -30,7 +39,7 @@ function RecapRow({ label, value }: { label: string; value: string }) {
   const { colors } = useTheme();
 
   return (
-    <View style={{ gap: 2 }}>
+    <View style={styles.recapRow}>
       <AppText variant="caption" color={colors.textSecondary}>
         {label}
       </AppText>
@@ -59,10 +68,35 @@ function hasHealthInfo(fields: EnrollmentHealthFields): boolean {
 export function EnrollmentRecapScreen() {
   const navigation = useNavigation<Navigation>();
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, tokens } = useTheme();
   const flow = useFlowStyles();
   const draft = useEnrollmentDraft();
-  const { requiredFields, healthFields, faceCaptureResult, isProvisional } = draft;
+  const {
+    requiredFields,
+    healthFields,
+    faceCaptureResult,
+    isProvisional,
+    idDocument,
+  } = draft;
+  const [isPickingDocument, setIsPickingDocument] = useState(false);
+  const [documentError, setDocumentError] = useState<string | undefined>();
+
+  const handleAttachIdDocument = async () => {
+    setIsPickingDocument(true);
+    setDocumentError(undefined);
+
+    try {
+      const attachment = await pickIdDocumentAttachment();
+      setEnrollmentIdDocument(attachment);
+    } catch (error) {
+      if (error instanceof DocumentPickCancelledError) {
+        return;
+      }
+      setDocumentError(t('enrollment.recap.idDocumentError'));
+    } finally {
+      setIsPickingDocument(false);
+    }
+  };
 
   const captureLabel = faceCaptureResult
     ? t(`enrollment.recap.captureQuality.${faceCaptureResult.qualityLabel}`)
@@ -154,6 +188,43 @@ export function EnrollmentRecapScreen() {
         </AppCard>
       </FlowSection>
 
+      <FlowSection>
+        <SectionTitle title={t('enrollment.recap.idDocumentSection')} />
+        <AppCard variant="soft" style={flow.cardGap}>
+          <AppText variant="body" color={colors.textSecondary}>
+            {idDocument
+              ? t('enrollment.recap.idDocumentAttached', {
+                  name: idDocument.fileName,
+                })
+              : t('enrollment.recap.idDocumentHint')}
+          </AppText>
+          {documentError ? (
+            <AppText variant="caption" color={tokens.colors.danger}>
+              {documentError}
+            </AppText>
+          ) : null}
+          <AppButton
+            label={
+              idDocument
+                ? t('enrollment.recap.idDocumentReplace')
+                : t('enrollment.recap.idDocumentAttach')
+            }
+            variant="outline"
+            fullWidth
+            loading={isPickingDocument}
+            onPress={() => { runAsync(() => handleAttachIdDocument()); }}
+          />
+          {idDocument ? (
+            <AppButton
+              label={t('enrollment.recap.idDocumentRemove')}
+              variant="outline"
+              fullWidth
+              onPress={() => setEnrollmentIdDocument(null)}
+            />
+          ) : null}
+        </AppCard>
+      </FlowSection>
+
       <FlowFooter>
         <AppButton
           label={t('enrollment.recap.editRequired')}
@@ -173,6 +244,9 @@ export function EnrollmentRecapScreen() {
 }
 
 const styles = StyleSheet.create({
+  recapRow: {
+    gap: 2,
+  },
   previewFrame: {
     overflow: 'hidden',
     borderRadius: 16,

@@ -1,4 +1,4 @@
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ROOT_ROUTES } from '../constants/routes';
 import { useSession } from '../hooks/useSession';
@@ -15,13 +15,7 @@ export function RootNavigator() {
 
   if (!isHydrated) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.background,
-        }}>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.primary} />
       </View>
     );
@@ -29,7 +23,7 @@ export function RootNavigator() {
 
   return (
     <RootStack.Navigator
-      screenOptions={{ headerShown: false, contentStyle: { flex: 1 } }}>
+      screenOptions={{ headerShown: false, contentStyle: styles.flex }}>
       {isAuthenticated ? (
         <RootStack.Screen name={ROOT_ROUTES.MAIN} component={MainNavigator} />
       ) : (
@@ -38,3 +32,14 @@ export function RootNavigator() {
     </RootStack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flex: {
+    flex: 1,
+  },
+});

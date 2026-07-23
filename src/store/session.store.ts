@@ -5,6 +5,7 @@ import {
   loadSessionSecure,
   saveSessionSecure,
 } from '../api/session.secure-storage';
+import { runAsync } from '../utils/runAsync';
 
 export interface SessionState {
   session: AgentSession | null;
@@ -30,7 +31,7 @@ export function setSession(session: AgentSession): void {
     session,
     isAuthenticated: true,
   }));
-  void saveSessionSecure(session);
+  runAsync(() => saveSessionSecure(session));
 }
 
 export function patchSessionTokens(tokens: {
@@ -48,7 +49,7 @@ export function patchSessionTokens(tokens: {
     ...state,
     session: next,
   }));
-  void saveSessionSecure(next);
+  runAsync(() => saveSessionSecure(next));
 }
 
 export function clearSession(): void {
@@ -58,7 +59,7 @@ export function clearSession(): void {
     isAuthenticated: false,
     pendingSyncCount: 0,
   }));
-  void clearSessionSecure();
+  runAsync(() => clearSessionSecure());
 }
 
 export function markHydrated(): void {

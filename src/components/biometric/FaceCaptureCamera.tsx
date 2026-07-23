@@ -22,6 +22,7 @@ import {
   logDevError,
   type FaceCaptureErrorKind,
 } from '../../utils/userFacingError';
+import { runAsync } from '../../utils/runAsync';
 
 export const FACE_CAPTURE_PREVIEW_HEIGHT = 360;
 
@@ -135,7 +136,7 @@ export function FaceCaptureCamera({
         </AppText>
         <Pressable
           accessibilityRole="button"
-          onPress={() => void requestPermission()}
+          onPress={() => { runAsync(() => requestPermission()); }}
           style={styles.permissionAction}>
           <AppText variant="bodyStrong" color={colors.primary}>
             {t('faceCapture.grantPermission')}

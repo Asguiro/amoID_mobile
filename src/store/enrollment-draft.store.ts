@@ -2,6 +2,7 @@ import { Store } from '@tanstack/store';
 import type {
   BeneficiaryDossierDetail,
   EnrollmentHealthFields,
+  EnrollmentIdDocumentAttachment,
   EnrollmentRequiredFields,
   EnrollmentSubmissionResult,
   ProvisionalIdentityInput,
@@ -23,7 +24,9 @@ export interface EnrollmentDraftState {
   healthFields: EnrollmentHealthFields;
   healthConsentAccepted: boolean;
   faceCaptureResult: FaceCaptureResult | null;
+  idDocument: EnrollmentIdDocumentAttachment | null;
   submissionResult: EnrollmentSubmissionResult | null;
+  /** Démo uniquement — simule un échec réseau à la soumission. */
   forceOfflineSubmit: boolean;
 }
 
@@ -43,6 +46,7 @@ const initialState: EnrollmentDraftState = {
   healthFields: { ...EMPTY_ENROLLMENT_HEALTH_FIELDS },
   healthConsentAccepted: false,
   faceCaptureResult: null,
+  idDocument: null,
   submissionResult: null,
   forceOfflineSubmit: false,
 };
@@ -85,16 +89,16 @@ export function selectEnrollmentDossier(dossier: BeneficiaryDossierDetail): void
   enrollmentDraftStore.setState(state => ({
     ...state,
     selectedDossier: dossier,
-    isProvisional: false,
+    isProvisional: Boolean(dossier.isProvisional),
     requiredFields: {
       firstName: dossier.firstName,
       lastName: dossier.lastName,
       birthDate: dossier.birthDate,
-      sex: '',
+      sex: dossier.sex ?? '',
       phoneCountryCode: phoneParts.phoneCountryCode,
       phoneNumber: phoneParts.phoneNumber,
       address: dossier.address,
-      city: '',
+      city: dossier.city ?? '',
       beneficiaryType: dossier.beneficiaryType,
       nina: dossier.nina,
       biometricCardNumber: dossier.biometricCardNumber,
@@ -176,6 +180,30 @@ export function setEnrollmentFaceCaptureResult(
   enrollmentDraftStore.setState(state => ({
     ...state,
     faceCaptureResult: result,
+  }));
+}
+
+export function clearEnrollmentFaceCapturePreview(): void {
+  enrollmentDraftStore.setState(state => {
+    if (!state.faceCaptureResult) {
+      return state;
+    }
+
+    const rest = { ...state.faceCaptureResult };
+    delete (rest as { previewUri?: string }).previewUri;
+    return {
+      ...state,
+      faceCaptureResult: rest,
+    };
+  });
+}
+
+export function setEnrollmentIdDocument(
+  attachment: EnrollmentIdDocumentAttachment | null,
+): void {
+  enrollmentDraftStore.setState(state => ({
+    ...state,
+    idDocument: attachment,
   }));
 }
 

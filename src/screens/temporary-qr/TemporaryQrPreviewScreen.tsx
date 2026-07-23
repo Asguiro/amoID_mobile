@@ -1,5 +1,4 @@
 import { useRef, useState, type ElementRef } from 'react';
-import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Share from 'react-native-share';
@@ -20,6 +19,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import type { TemporaryQrStackParamList } from '../../navigation/flow-types';
 import { getTemporaryQrFlowState } from '../../store/temporary-qr-flow.store';
 import { useTheme } from '../../theme/ThemeProvider';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   TemporaryQrStackParamList,
@@ -139,7 +139,7 @@ export function TemporaryQrPreviewScreen() {
           label={t('temporaryQr.preview.share')}
           fullWidth
           onPress={() => {
-            void handleShare();
+            runAsync(() => handleShare());
           }}
         />
         <AppButton
@@ -147,7 +147,7 @@ export function TemporaryQrPreviewScreen() {
           variant="outline"
           fullWidth
           onPress={() => {
-            void handlePrint();
+            runAsync(() => handlePrint());
           }}
         />
         <AppButton

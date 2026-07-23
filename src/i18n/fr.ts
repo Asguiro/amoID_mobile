@@ -473,9 +473,10 @@ export const fr = {
       description:
         'Commencez par vérifier l’identité du bénéficiaire afin d’éviter les doublons. Vous pourrez ensuite compléter les informations et effectuer la capture faciale.',
       start: 'Démarrer l’enrôlement',
+      search: 'Rechercher un bénéficiaire existant',
       offlineHint:
         'En cas de perte réseau, la saisie peut être conservée localement puis synchronisée selon les règles de sécurité.',
-      offlineSection: 'Hors ligne',
+      offlineSection: 'Mode hors ligne (prévu)',
     },
     identityCheck: {
       title: 'Vérification d’identité',
@@ -514,7 +515,8 @@ export const fr = {
       createProvisional: 'Créer un dossier provisoire',
       cancel: 'Annuler',
       viewProfile: 'Voir le profil du bénéficiaire',
-      hint: 'Démo : NINA-009871 (existant), __duplicate__ (doublon), __error_reseau__ (réseau).',
+      hint: 'Saisissez un NINA connu de votre antenne, ou utilisez la recherche libre.',
+      openSearch: 'Recherche libre (nom, AMO, téléphone)',
     },
     search: {
       title: 'Rechercher un bénéficiaire',
@@ -529,7 +531,7 @@ export const fr = {
       createProvisional: 'Créer une fiche provisoire',
       resultsSection: 'Résultats',
       resultsCount: '{{count}} résultat(s)',
-      hint: 'Astuce : saisissez « __error_reseau__ » pour simuler une erreur réseau.',
+      hint: 'La recherche interroge le registre de votre antenne via l’API mobile.',
     },
     dossier: {
       title: 'Dossier bénéficiaire',
@@ -642,6 +644,14 @@ export const fr = {
         poor: 'Qualité insuffisante',
       },
       provisionalBadge: 'Fiche provisoire',
+      idDocumentSection: 'Pièce d’identité (optionnel)',
+      idDocumentHint:
+        'Joignez une photo ou un PDF de la pièce d’identité. Aucune photo faciale n’est stockée ici.',
+      idDocumentAttach: 'Joindre une pièce d’identité',
+      idDocumentReplace: 'Remplacer la pièce jointe',
+      idDocumentRemove: 'Retirer la pièce jointe',
+      idDocumentAttached: 'Document joint : {{name}}',
+      idDocumentError: 'Impossible de lire le document sélectionné.',
       editRequired: 'Modifier les informations',
       submit: 'Passer à la soumission',
     },
@@ -652,9 +662,9 @@ export const fr = {
       loading: 'Soumission en cours…',
       confirm: 'Soumettre le dossier',
       captureRequired: 'La capture faciale est obligatoire avant soumission.',
-      simulateOffline: 'Simuler une soumission hors ligne',
+      simulateOffline: '[Démo] Simuler une soumission hors ligne',
       simulateOfflineHint:
-        'Le dossier sera enregistré localement en file d’attente.',
+        'Option de démonstration uniquement — force un échec réseau et une file locale fictive.',
       successTitle: 'Dossier transmis',
       successDescription: 'Redirection vers la confirmation…',
     },

@@ -25,6 +25,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   VerificationStackParamList,
@@ -119,7 +120,7 @@ export function VerificationManualScreen() {
         <AppButton
           label={t('verification.manual.submit')}
           fullWidth
-          onPress={() => void handleSubmit()}
+          onPress={() => { runAsync(() => handleSubmit()); }}
           disabled={uiState === 'LOADING'}
         />
       </FlowFooter>

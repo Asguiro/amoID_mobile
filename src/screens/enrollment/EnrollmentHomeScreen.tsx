@@ -32,6 +32,11 @@ export function EnrollmentHomeScreen() {
     navigation.navigate(ENROLLMENT_ROUTES.IDENTITY_CHECK);
   };
 
+  const handleSearchBeneficiary = () => {
+    resetEnrollmentDraft();
+    navigation.navigate(ENROLLMENT_ROUTES.SEARCH);
+  };
+
   return (
     <AppScreen header={<AppHeader title={t('enrollment.title')} showBack />}>
       <FlowSection first>
@@ -44,6 +49,12 @@ export function EnrollmentHomeScreen() {
             label={t('enrollment.home.start')}
             fullWidth
             onPress={handleStartEnrollment}
+          />
+          <AppButton
+            label={t('enrollment.home.search')}
+            variant="outline"
+            fullWidth
+            onPress={handleSearchBeneficiary}
           />
         </AppCard>
       </FlowSection>

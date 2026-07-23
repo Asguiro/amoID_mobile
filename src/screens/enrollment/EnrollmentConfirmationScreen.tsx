@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,7 +17,10 @@ import { ENROLLMENT_ROUTES, MAIN_STACK_ROUTES } from '../../constants/routes';
 import { useEnrollmentDraft } from '../../hooks/useEnrollmentDraft';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { EnrollmentStackParamList } from '../../navigation/flow-types';
-import { resetEnrollmentDraft } from '../../store/enrollment-draft.store';
+import {
+  clearEnrollmentFaceCapturePreview,
+  resetEnrollmentDraft,
+} from '../../store/enrollment-draft.store';
 import { useFlowStyles } from '../../theme/useFlowStyles';
 import { formatDisplayDateTime } from '../../utils/formatDate';
 
@@ -31,6 +35,10 @@ export function EnrollmentConfirmationScreen() {
   const flow = useFlowStyles();
   const draft = useEnrollmentDraft();
   const result = draft.submissionResult;
+
+  useEffect(() => {
+    clearEnrollmentFaceCapturePreview();
+  }, []);
 
   if (!result) {
     return (

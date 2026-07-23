@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ServiceUiState } from '../../api/types/ui-state.types';
@@ -41,6 +42,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   IdentificationStackParamList,
@@ -131,7 +133,7 @@ export function QrCardScanScreen() {
               scanState={phase}
               actionLabel={t('identification.qr.simulateScan')}
               onAction={() => {
-                void handleSimulateScan();
+                runAsync(() => handleSimulateScan());
               }}
               disabled={isScanning}
             />
@@ -157,7 +159,7 @@ export function QrCardScanScreen() {
             title={t('identification.result.notFoundTitle')}
             description={t('identification.result.notFoundDescription')}
           />
-          <FlowFooter style={{ marginTop: 0 }}>
+          <FlowFooter style={styles.footerFlush}>
             <AppButton
               label={t('identification.manual.title')}
               fullWidth
@@ -221,3 +223,9 @@ export function QrCardScanScreen() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  footerFlush: {
+    marginTop: 0,
+  },
+});

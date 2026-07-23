@@ -26,6 +26,7 @@ import {
   type FaceCaptureErrorKind,
 } from '../utils/userFacingError';
 import { useTranslation } from './useTranslation';
+import { runAsync } from '../utils/runAsync';
 
 const MAX_ATTEMPTS = 3;
 const FACE_PROCESS_INTERVAL_MS = 120;
@@ -96,7 +97,7 @@ export function useBiometricCapture({
   }, [mode, t]);
 
   useEffect(() => {
-    void initialize();
+    runAsync(() => initialize());
 
     return () => {
       if (sessionRef.current) {
@@ -203,7 +204,7 @@ export function useBiometricCapture({
       livenessRef.current = progress;
 
       if (nextPhase === 'capture_ok') {
-        void finalizeCapture();
+        runAsync(() => finalizeCapture());
         return;
       }
 
@@ -236,7 +237,7 @@ export function useBiometricCapture({
   }, []);
 
   const retry = useCallback(() => {
-    void initialize();
+    runAsync(() => initialize());
   }, [initialize]);
 
   const handleCameraError = useCallback(

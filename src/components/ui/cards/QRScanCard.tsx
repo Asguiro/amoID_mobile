@@ -38,9 +38,11 @@ export function QRScanCard({
           {
             borderRadius: qrTheme.cornerRadius,
             backgroundColor: tokens.colors.navy,
-            borderColor: isSuccess ? tokens.colors.primary : 'transparent',
-            borderWidth: isSuccess ? 2 : 0,
           },
+          isSuccess && [
+            styles.scanZoneSuccess,
+            { borderColor: tokens.colors.primary },
+          ],
         ]}>
         {isScanning ? (
           <ActivityIndicator size="large" color={tokens.colors.primary} />
@@ -84,6 +86,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 240,
     paddingVertical: 32,
+    borderWidth: 0,
+  },
+  scanZoneSuccess: {
+    borderWidth: 2,
   },
   securityNote: {
     paddingHorizontal: 16,

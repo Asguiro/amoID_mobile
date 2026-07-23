@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BeneficiaryType } from '../../api/types/beneficiary.types';
@@ -68,8 +68,8 @@ function ChoiceChips<T extends string>({
               {
                 borderColor: isActive ? colors.primary : colors.border,
                 backgroundColor: isActive ? colors.cardSoft : colors.card,
-                opacity: disabled ? 0.6 : 1,
               },
+              disabled && styles.dimmed,
             ]}>
             <AppText
               variant="bodyStrong"
@@ -82,6 +82,12 @@ function ChoiceChips<T extends string>({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  dimmed: {
+    opacity: 0.6,
+  },
+});
 
 export function MandatoryInfoScreen() {
   const navigation = useNavigation<Navigation>();

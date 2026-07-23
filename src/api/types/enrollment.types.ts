@@ -7,6 +7,8 @@ import type { FaceCaptureResult } from './face-capture.types';
 
 export type BeneficiarySex = 'female' | 'male';
 
+export type FaceCaptureQualityLabelApi = 'GOOD' | 'ACCEPTABLE' | 'POOR';
+
 export interface EnrollmentRequiredFields {
   firstName: string;
   lastName: string;
@@ -37,6 +39,14 @@ export interface EnrollmentHealthFields {
   externalDossierNumber: string;
 }
 
+export interface EnrollmentIdDocumentAttachment {
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  contentBase64?: string;
+  label?: string;
+}
+
 export interface BeneficiaryDossierDetail {
   id: string;
   amoNumber: string;
@@ -47,6 +57,8 @@ export interface BeneficiaryDossierDetail {
   birthDate: string;
   phone: string;
   address: string;
+  city?: string;
+  sex?: BeneficiarySex | '';
   coverageStatus: BeneficiaryCoverageStatus;
   beneficiaryType: BeneficiaryType;
   establishmentName: string;
@@ -54,6 +66,7 @@ export interface BeneficiaryDossierDetail {
   hasBiometrics: boolean;
   hasHealthInfo: boolean;
   lastVerifiedAt?: string;
+  isProvisional?: boolean;
 }
 
 export interface BeneficiarySearchRequest {
@@ -101,11 +114,14 @@ export interface EnrollmentSubmitRequest {
   healthFields: EnrollmentHealthFields;
   healthConsentAccepted: boolean;
   faceCapture: FaceCaptureResult;
+  idDocument?: EnrollmentIdDocumentAttachment | null;
+  /** Démo locale uniquement — ne pas utiliser en production. */
   forceOffline?: boolean;
 }
 
 export interface EnrollmentSubmissionResult {
   dossierId: string;
+  enrollmentId?: string;
   status: EnrollmentSubmissionStatus;
   submittedAt: string;
 }

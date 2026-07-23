@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AppText } from '../ui/AppText';
@@ -44,18 +44,15 @@ export function FlowSection({
   const resolvedGap =
     typeof gap === 'string' ? tokens.spacing[gap] : gap ?? tokens.spacing.md;
 
-  return (
-    <View
-      style={[
-        {
-          marginTop: first ? 0 : tokens.spacing.sectionGap,
-          gap: resolvedGap,
-        },
-        style,
-      ]}>
-      {children}
-    </View>
+  const sectionStyle = useMemo(
+    () => ({
+      marginTop: first ? 0 : tokens.spacing.sectionGap,
+      gap: resolvedGap,
+    }),
+    [first, tokens.spacing.sectionGap, resolvedGap],
   );
+
+  return <View style={[sectionStyle, style]}>{children}</View>;
 }
 
 export type FlowSpacingToken = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'sectionGap';
@@ -73,7 +70,7 @@ export function FlowStack({ children, style, gap = 'md' }: FlowStackProps) {
   const { tokens } = useTheme();
 
   return (
-    <View style={[{ gap: tokens.spacing[gap], width: '100%' }, style]}>
+    <View style={[styles.fullWidth, { gap: tokens.spacing[gap] }, style]}>
       {children}
     </View>
   );
@@ -108,6 +105,9 @@ const styles = StyleSheet.create({
   },
   intro: {
     lineHeight: 24,
+  },
+  fullWidth: {
+    width: '100%',
   },
   footer: {
     width: '100%',

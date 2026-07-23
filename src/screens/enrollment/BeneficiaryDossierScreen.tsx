@@ -19,6 +19,7 @@ import { useBeneficiaryDossier } from '../../hooks/useEnrollment';
 import { useEnrollmentDraft } from '../../hooks/useEnrollmentDraft';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { EnrollmentStackParamList } from '../../navigation/flow-types';
+import { selectEnrollmentDossier } from '../../store/enrollment-draft.store';
 import { useFlowStyles } from '../../theme/useFlowStyles';
 
 type Navigation = NativeStackNavigationProp<
@@ -84,7 +85,10 @@ export function BeneficiaryDossierScreen() {
               <AppButton
                 label={t('enrollment.dossier.continue')}
                 fullWidth
-                onPress={() => navigation.navigate(ENROLLMENT_ROUTES.REQUIRED_INFO)}
+                onPress={() => {
+                  selectEnrollmentDossier(dossier);
+                  navigation.navigate(ENROLLMENT_ROUTES.REQUIRED_INFO);
+                }}
               />
             </FlowFooter>
           ) : null}

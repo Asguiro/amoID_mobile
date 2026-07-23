@@ -28,6 +28,7 @@ import {
   getServiceErrorMessage,
   mapServiceErrorToUiState,
 } from '../../utils/serviceError';
+import { runAsync } from '../../utils/runAsync';
 
 type Navigation = NativeStackNavigationProp<
   IdentificationStackParamList,
@@ -147,7 +148,7 @@ export function ManualIdentificationScreen() {
           <ErrorState
             message={errorMessage}
             onRetry={() => {
-              void handleSearch();
+              runAsync(() => handleSearch());
             }}
           />
         </FlowSection>
@@ -160,7 +161,7 @@ export function ManualIdentificationScreen() {
           disabled={!canSearch}
           loading={searchMutation.isPending}
           onPress={() => {
-            void handleSearch();
+            runAsync(() => handleSearch());
           }}
         />
       </FlowFooter>

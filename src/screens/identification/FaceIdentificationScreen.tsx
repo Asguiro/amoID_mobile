@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -33,6 +34,25 @@ export function FaceIdentificationScreen() {
   const { colors, tokens } = useTheme();
   const flow = useFlowStyles();
 
+  const prepCopyStyle = useMemo(
+    () => [
+      styles.prepCopy,
+      { gap: tokens.spacing.xxs, paddingTop: tokens.spacing.xxs },
+    ],
+    [tokens.spacing.xxs],
+  );
+
+  const prepDotStyle = useMemo(
+    () => ({
+      width: tokens.spacing.xs,
+      height: tokens.spacing.xs,
+      borderRadius: tokens.spacing.xxs,
+      backgroundColor: colors.primary,
+      marginTop: tokens.spacing.xs,
+    }),
+    [tokens.spacing.xs, tokens.spacing.xxs, colors.primary],
+  );
+
   const handleStartCapture = () => {
     setIdentificationMethod('face');
     navigation.navigate(IDENTIFICATION_ROUTES.FACE_CAPTURE, {
@@ -51,7 +71,7 @@ export function FaceIdentificationScreen() {
             <CircleIcon tone="success">
               <FaceScanGlyph color={colors.primary} />
             </CircleIcon>
-            <View style={{ flex: 1, gap: tokens.spacing.xxs, paddingTop: tokens.spacing.xxs }}>
+            <View style={prepCopyStyle}>
               <AppText variant="rowSubtitle" color={colors.textSecondary}>
                 {t('identification.face.prepDescription')}
               </AppText>
@@ -61,16 +81,8 @@ export function FaceIdentificationScreen() {
           <View style={flow.cardGapMd}>
             {PREP_ITEMS.map(item => (
               <View key={item} style={flow.headerRow}>
-                <View
-                  style={{
-                    width: tokens.spacing.xs,
-                    height: tokens.spacing.xs,
-                    borderRadius: tokens.spacing.xxs,
-                    backgroundColor: colors.primary,
-                    marginTop: tokens.spacing.xs,
-                  }}
-                />
-                <AppText variant="body" color={colors.textPrimary} style={{ flex: 1, lineHeight: 24 }}>
+                <View style={prepDotStyle} />
+                <AppText variant="body" color={colors.textPrimary} style={styles.prepItemText}>
                   {t(`identification.face.prepItems.${item}`)}
                 </AppText>
               </View>
@@ -96,3 +108,13 @@ export function FaceIdentificationScreen() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  prepCopy: {
+    flex: 1,
+  },
+  prepItemText: {
+    flex: 1,
+    lineHeight: 24,
+  },
+});

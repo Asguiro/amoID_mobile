@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AppText } from './AppText';
@@ -25,18 +26,25 @@ export function SegmentedControl<T extends string>({
 }: SegmentedControlProps<T>) {
   const { tokens, colors } = useTheme();
 
+  const containerStyle = useMemo(
+    () => [
+      styles.container,
+      {
+        backgroundColor: colors.cardSoft,
+        borderRadius: tokens.components.input.borderRadius,
+      },
+      style,
+    ],
+    [colors.cardSoft, tokens.components.input.borderRadius, style],
+  );
+
+  const segmentRadius = useMemo(
+    () => ({ borderRadius: tokens.components.input.borderRadius - 2 }),
+    [tokens.components.input.borderRadius],
+  );
+
   return (
-    <View
-      accessibilityRole="tablist"
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.cardSoft,
-          borderRadius: tokens.components.input.borderRadius,
-          padding: 4,
-        },
-        style,
-      ]}>
+    <View accessibilityRole="tablist" style={containerStyle}>
       {options.map(option => {
         const isSelected = option.value === value;
 
@@ -48,10 +56,8 @@ export function SegmentedControl<T extends string>({
             onPress={() => onChange(option.value)}
             style={[
               styles.segment,
-              {
-                borderRadius: tokens.components.input.borderRadius - 2,
-                backgroundColor: isSelected ? colors.card : 'transparent',
-              },
+              segmentRadius,
+              isSelected ? { backgroundColor: colors.card } : styles.segmentIdle,
             ]}>
             <AppText
               variant="bodyStrong"
@@ -70,6 +76,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     gap: 4,
+    padding: 4,
   },
   segment: {
     flex: 1,
@@ -78,6 +85,9 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: 8,
     paddingVertical: 8,
+  },
+  segmentIdle: {
+    backgroundColor: 'transparent',
   },
   segmentLabel: {
     textAlign: 'center',
