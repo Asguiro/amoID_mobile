@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Image,
-  Pressable,
-  Share,
-  StyleSheet,
-  View,
-} from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { Image, Pressable, Share, StyleSheet, View } from 'react-native';
 import {
   deviceAccessFromAuthCode,
   loginWithApi,
@@ -45,39 +38,13 @@ interface LoginFormErrors {
   password?: string;
 }
 
-function SecurityShield({ color }: { color: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" accessibilityLabel="">
-      <Path
-        d="M12 3 20 7v6c0 4.4-3.2 7.8-8 9-4.8-1.2-8-4.6-8-9V7l8-4Z"
-        stroke={color}
-        strokeWidth={1.6}
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M9.5 12 11 13.5 14.5 10"
-        stroke={color}
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function DeviceAccessPanel({
+function DeviceAccessBanner({
   status,
-  deviceId,
-  onRequestRegistration,
   onShareId,
-  requesting,
   requestSuccess,
 }: {
   status: Exclude<DeviceAccessStatus, 'ok'>;
-  deviceId: string;
-  onRequestRegistration?: () => void;
   onShareId: () => void;
-  requesting?: boolean;
   requestSuccess?: boolean;
 }) {
   const { t } = useTranslation();
@@ -105,65 +72,25 @@ function DeviceAccessPanel({
   return (
     <View
       style={[
-        styles.accessPanel,
-        {
-          backgroundColor: `${tone}14`,
-          borderColor: `${tone}55`,
-        },
+        styles.accessBanner,
+        { backgroundColor: `${tone}12`, borderColor: `${tone}40` },
       ]}
       accessibilityRole="alert">
       <AppText variant="title" color={tone}>
         {t(titleKey)}
       </AppText>
       <AppText variant="body" color={colors.textSecondary} style={styles.accessBody}>
-        {t(bodyKey)}
+        {requestSuccess ? t('auth.deviceAccess.requestSent') : t(bodyKey)}
       </AppText>
-      <View style={styles.deviceIdRow}>
-        <View style={{ flex: 1 }}>
-          <AppText variant="caption" color={colors.textSecondary}>
-            {t('auth.deviceAccess.deviceIdLabel')}
-          </AppText>
-          <AppText variant="body" style={styles.deviceIdValue}>
-            {deviceId}
-          </AppText>
-        </View>
-        <Pressable
-          onPress={onShareId}
-          accessibilityRole="button"
-          accessibilityLabel={t('auth.deviceAccess.shareId')}>
-          <AppText variant="caption" color={tokens.colors.info}>
-            {t('auth.deviceAccess.shareId')}
-          </AppText>
-        </Pressable>
-      </View>
-      {requestSuccess ? (
-        <AppText variant="caption" color={tokens.colors.success} style={styles.accessBody}>
-          {t('auth.deviceAccess.requestSent')}
+      <Pressable
+        onPress={onShareId}
+        accessibilityRole="button"
+        accessibilityLabel={t('auth.deviceAccess.shareId')}
+        hitSlop={8}>
+        <AppText variant="caption" color={tokens.colors.info}>
+          {t('auth.deviceAccess.shareId')}
         </AppText>
-      ) : null}
-      {status === 'unknown' && onRequestRegistration ? (
-        <AppButton
-          label={
-            requesting
-              ? t('auth.deviceAccess.requesting')
-              : t('auth.deviceAccess.requestCta')
-          }
-          loading={requesting}
-          fullWidth
-          onPress={onRequestRegistration}
-          containerStyle={{ marginTop: tokens.spacing.md }}
-        />
-      ) : null}
-      {status === 'pending' ? (
-        <AppText variant="caption" color={colors.textSecondary} style={styles.accessBody}>
-          {t('auth.deviceAccess.pendingHint')}
-        </AppText>
-      ) : null}
-      {status === 'revoked' ? (
-        <AppText variant="caption" color={colors.textSecondary} style={styles.accessBody}>
-          {t('auth.deviceAccess.revokedHint')}
-        </AppText>
-      ) : null}
+      </Pressable>
     </View>
   );
 }
@@ -189,6 +116,7 @@ export function LoginScreen() {
     deviceAccessStatus === 'unknown' ||
     deviceAccessStatus === 'pending' ||
     deviceAccessStatus === 'revoked';
+  const canRequest = deviceAccessStatus === 'unknown';
 
   const updateField = <K extends keyof LoginFormState>(
     key: K,
@@ -200,19 +128,21 @@ export function LoginScreen() {
 
   const validate = (): LoginFormErrors => {
     const nextErrors: LoginFormErrors = {};
-
     if (!form.identifier.trim()) {
       nextErrors.identifier = t('auth.validation.identifierRequired');
     }
-
     if (!form.password.trim()) {
       nextErrors.password = t('auth.validation.passwordRequired');
     } else if (form.password.trim().length < 6) {
       nextErrors.password = t('auth.validation.passwordMinLength');
     }
-
     return nextErrors;
   };
+
+  const credentials = (): LoginCredentials => ({
+    identifier: form.identifier.trim(),
+    password: form.password,
+  });
 
   const handleShareDeviceId = async () => {
     await Share.share({
@@ -228,11 +158,7 @@ export function LoginScreen() {
 
     setIsRequesting(true);
     try {
-      const credentials: LoginCredentials = {
-        identifier: form.identifier.trim(),
-        password: form.password,
-      };
-      await requestDeviceRegistrationWithApi(credentials);
+      await requestDeviceRegistrationWithApi(credentials());
       setDeviceAccessStatus('pending', 'DEVICE_PENDING');
       setRequestSuccess(true);
     } catch (error) {
@@ -254,19 +180,11 @@ export function LoginScreen() {
     setErrors(nextErrors);
     setSubmitError(undefined);
     setRequestSuccess(false);
-
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
+    if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
-
     try {
-      const credentials: LoginCredentials = {
-        identifier: form.identifier.trim(),
-        password: form.password,
-      };
-      const session = await loginWithApi(credentials);
+      const session = await loginWithApi(credentials());
       clearDeviceAccessStatus();
       login(session);
     } catch (error) {
@@ -290,7 +208,7 @@ export function LoginScreen() {
       withOfflineBanner={false}
       background="alt"
       contentContainerStyle={flow.scrollCenter}>
-      <View style={flow.hero}>
+      <View style={styles.hero}>
         <Image
           source={brandLogo}
           style={flow.logo}
@@ -300,41 +218,19 @@ export function LoginScreen() {
         <AppText variant="h2" accessibilityRole="header">
           {t('auth.title')}
         </AppText>
-        <AppText variant="body" color={colors.textSecondary} style={flow.hint}>
-          {blocked ? t('auth.deviceAccess.subtitleBlocked') : t('auth.subtitle')}
-        </AppText>
       </View>
 
       {blocked ? (
-        <DeviceAccessPanel
+        <DeviceAccessBanner
           status={deviceAccessStatus}
-          deviceId={deviceId}
-          onRequestRegistration={
-            deviceAccessStatus === 'unknown'
-              ? handleRequestRegistration
-              : undefined
-          }
           onShareId={handleShareDeviceId}
-          requesting={isRequesting}
           requestSuccess={requestSuccess}
         />
       ) : null}
 
       <AppCard variant="elevated">
         <View style={flow.formFields}>
-          {submitError && !blocked ? (
-            <View
-              style={[
-                styles.inlineError,
-                { backgroundColor: `${tokens.colors.danger}14` },
-              ]}
-              accessibilityRole="alert">
-              <AppText variant="caption" color={tokens.colors.danger}>
-                {submitError}
-              </AppText>
-            </View>
-          ) : null}
-          {submitError && blocked ? (
+          {submitError ? (
             <AppText variant="caption" color={tokens.colors.danger}>
               {submitError}
             </AppText>
@@ -352,7 +248,6 @@ export function LoginScreen() {
             returnKeyType="next"
             editable={!isSubmitting && !isRequesting}
           />
-
           <AppTextInput
             label={t('auth.passwordLabel')}
             value={form.password}
@@ -363,72 +258,74 @@ export function LoginScreen() {
             textContentType="password"
             autoComplete="password"
             returnKeyType="done"
-            onSubmitEditing={handleSubmit}
+            onSubmitEditing={canRequest ? handleRequestRegistration : handleSubmit}
             editable={!isSubmitting && !isRequesting}
           />
         </View>
 
-        <FlowFooter style={{ marginTop: tokens.spacing.lg }}>
-          <AppButton
-            label={
-              isSubmitting
-                ? t('auth.submitting')
-                : blocked
-                  ? t('auth.retryLogin')
-                  : t('auth.submit')
-            }
-            loading={isSubmitting}
-            fullWidth
-            onPress={handleSubmit}
-          />
+        <FlowFooter style={{ marginTop: tokens.spacing.lg, gap: tokens.spacing.sm }}>
+          {canRequest ? (
+            <AppButton
+              label={
+                isRequesting
+                  ? t('auth.deviceAccess.requesting')
+                  : t('auth.deviceAccess.requestCta')
+              }
+              loading={isRequesting}
+              fullWidth
+              onPress={handleRequestRegistration}
+            />
+          ) : (
+            <AppButton
+              label={
+                isSubmitting
+                  ? t('auth.submitting')
+                  : blocked
+                    ? t('auth.retryLogin')
+                    : t('auth.submit')
+              }
+              loading={isSubmitting}
+              fullWidth
+              onPress={handleSubmit}
+            />
+          )}
+          {canRequest ? (
+            <Pressable
+              onPress={handleSubmit}
+              disabled={isSubmitting || isRequesting}
+              accessibilityRole="button">
+              <AppText
+                variant="caption"
+                color={colors.textSecondary}
+                style={styles.secondaryAction}>
+                {isSubmitting ? t('auth.submitting') : t('auth.retryLogin')}
+              </AppText>
+            </Pressable>
+          ) : null}
         </FlowFooter>
       </AppCard>
-
-      <View style={[flow.trustBanner, { backgroundColor: `${tokens.colors.info}10` }]}>
-        <SecurityShield color={tokens.colors.info} />
-        <AppText variant="caption" color={tokens.colors.info} style={styles.trustText}>
-          {t('auth.securityNote')}
-        </AppText>
-      </View>
-
-      <AppText
-        variant="caption"
-        color={colors.textSecondary}
-        style={flow.devHintCaption}>
-        {t('auth.devHint')}
-      </AppText>
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  trustText: {
-    flex: 1,
-    lineHeight: 18,
-  },
-  accessPanel: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+  hero: {
+    alignItems: 'flex-start',
     gap: 8,
+    marginBottom: 20,
+  },
+  accessBanner: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+    gap: 6,
   },
   accessBody: {
     lineHeight: 20,
   },
-  deviceIdRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 12,
-    marginTop: 4,
-  },
-  deviceIdValue: {
-    fontFamily: 'monospace',
-    marginTop: 2,
-  },
-  inlineError: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  secondaryAction: {
+    textAlign: 'center',
+    paddingVertical: 8,
   },
 });

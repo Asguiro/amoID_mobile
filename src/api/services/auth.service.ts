@@ -1,5 +1,5 @@
 import { AGENT_ROLES, type AgentRole } from '../../constants/roles';
-import { getMobilePlatform } from '../device-id';
+import { getMobileDeviceMeta } from '../device-id';
 import { getMobileDeviceId, MobileApiError, mobileRequest } from '../client';
 import type { AgentSession, LoginCredentials } from '../types/agent.types';
 
@@ -140,7 +140,7 @@ export async function requestDeviceRegistrationWithApi(
       body: {
         identifier,
         password,
-        platform: getMobilePlatform(),
+        ...getMobileDeviceMeta(),
       },
       skipAuthRetry: true,
     },

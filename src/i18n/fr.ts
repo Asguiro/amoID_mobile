@@ -25,7 +25,7 @@ export const fr = {
     passwordPlaceholder: 'Votre mot de passe',
     submit: 'Se connecter',
     submitting: 'Connexion en cours…',
-    retryLogin: 'Réessayer la connexion',
+    retryLogin: 'Déjà approuvé ? Se connecter',
     securityNote:
       'Connexion sécurisée réservée aux agents habilités. Vos identifiants sont protégés.',
     devHint:
@@ -43,7 +43,7 @@ export const fr = {
       deviceUnknown:
         'Appareil non reconnu. Demandez l’enregistrement de cet appareil.',
       devicePending:
-        'Cet appareil est en attente d’approbation. Les modules restent verrouillés.',
+        'Cet appareil est en attente d’approbation.',
       deviceRequired: 'Identifiant appareil manquant. Redémarrez l’application.',
       agentSuspended:
         'Votre compte agent est suspendu. Contactez l’administration.',
@@ -51,28 +51,28 @@ export const fr = {
     },
     deviceAccess: {
       subtitleBlocked:
-        'L’accès aux modules est bloqué tant que cet appareil n’est pas approuvé.',
+        'Accès bloqué tant que cet appareil n’est pas approuvé.',
       unknownTitle: 'Appareil non enregistré',
       unknownBody:
-        'Ce terminal n’est pas reconnu. Demandez l’enregistrement ou communiquez l’identifiant à votre superviseur.',
+        'Demandez l’enregistrement pour que votre superviseur puisse approuver ce téléphone.',
       pendingTitle: 'En attente d’approbation',
       pendingBody:
-        'Votre demande a été transmise. Un superviseur doit approuver cet appareil avant toute connexion.',
+        'Demande transmise. Réessayez après validation par votre superviseur.',
       pendingHint:
         'Vous ne pouvez pas accéder à l’application tant que l’appareil n’est pas approuvé.',
       revokedTitle: 'Appareil révoqué',
       revokedBody:
-        'Cet appareil a été désactivé par l’administration. La connexion et les modules sont interdits.',
+        'Cet appareil a été désactivé. Contactez votre superviseur.',
       revokedHint:
         'Contactez votre superviseur pour une restauration ou un nouvel enrôlement.',
       deviceIdLabel: 'Identifiant appareil',
-      shareId: 'Partager',
+      shareId: 'Partager l’identifiant appareil',
       shareMessage:
         'Identifiant appareil AMO ID à enregistrer : {{deviceId}}',
       requestCta: 'Demander l’enregistrement',
       requesting: 'Envoi de la demande…',
       requestSent:
-        'Demande envoyée. Réessayez la connexion après approbation.',
+        'Demande envoyée. Réessayez après approbation.',
     },
   },
   screens: {

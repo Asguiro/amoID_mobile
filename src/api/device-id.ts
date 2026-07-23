@@ -51,3 +51,68 @@ export function getMobileDeviceId(): string {
 export function getMobilePlatform(): string {
   return Platform.OS === 'ios' ? 'ios' : 'android';
 }
+
+type AndroidPlatformConstants = {
+  Brand?: string;
+  Model?: string;
+  Manufacturer?: string;
+  Release?: string;
+};
+
+type IosPlatformConstants = {
+  systemName?: string;
+  osVersion?: string;
+};
+
+/** Métadonnées matérielles pour l’enregistrement / la supervision. */
+export function getMobileDeviceMeta(): {
+  platform: string;
+  brand?: string;
+  model?: string;
+  manufacturer?: string;
+  osVersion?: string;
+  label?: string;
+} {
+  const platform = getMobilePlatform();
+  const constants = Platform.constants as
+    | AndroidPlatformConstants
+    | IosPlatformConstants
+    | undefined;
+
+  if (platform === 'ios') {
+    const ios = constants as IosPlatformConstants | undefined;
+    const osVersion =
+      ios?.osVersion ??
+      (typeof Platform.Version === 'string'
+        ? Platform.Version
+        : String(Platform.Version));
+    return {
+      platform,
+      brand: 'Apple',
+      manufacturer: 'Apple',
+      model: ios?.systemName === 'iPadOS' ? 'iPad' : 'iPhone',
+      osVersion,
+      label: `Apple ${ios?.systemName === 'iPadOS' ? 'iPad' : 'iPhone'}`,
+    };
+  }
+
+  const android = constants as AndroidPlatformConstants | undefined;
+  const brand = android?.Brand?.trim() || undefined;
+  const model = android?.Model?.trim() || undefined;
+  const manufacturer = android?.Manufacturer?.trim() || undefined;
+  const osVersion =
+    android?.Release?.trim() ||
+    (typeof Platform.Version === 'number'
+      ? String(Platform.Version)
+      : String(Platform.Version));
+  const hardwareLabel = [brand, model].filter(Boolean).join(' ').trim();
+
+  return {
+    platform,
+    brand,
+    model,
+    manufacturer,
+    osVersion,
+    label: hardwareLabel || undefined,
+  };
+}
