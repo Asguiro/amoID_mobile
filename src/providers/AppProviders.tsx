@@ -1,4 +1,5 @@
-import { useEffect, type PropsWithChildren } from 'react';
+import { useEffect, useState, type PropsWithChildren } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BootSplash from 'react-native-bootsplash';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -6,7 +7,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppStatusBar } from '../components/ui/AppStatusBar';
 import { AppNavigationContainer } from '../navigation/MainNavigator';
 import { RootNavigator } from '../navigation/RootNavigator';
-import { ThemeProvider } from '../theme/ThemeProvider';
+import { hydrateSession } from '../store/session.store';
+import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,9 +20,36 @@ const queryClient = new QueryClient({
 });
 
 function BootSplashGate({ children }: PropsWithChildren) {
+  const [ready, setReady] = useState(false);
+  const { colors } = useTheme();
+
   useEffect(() => {
-    BootSplash.hide({ fade: true });
+    let cancelled = false;
+    (async () => {
+      await hydrateSession();
+      if (!cancelled) {
+        setReady(true);
+        await BootSplash.hide({ fade: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  if (!ready) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.background,
+        }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
   return children;
 }

@@ -36,6 +36,14 @@ export const fr = {
     },
     errors: {
       generic: 'Connexion impossible. Vérifiez vos identifiants et le réseau.',
+      invalidCredentials: 'Identifiants invalides.',
+      deviceRevoked:
+        'Cet appareil a été révoqué. Contactez votre superviseur.',
+      deviceUnknown:
+        'Appareil non reconnu. Demandez l’enregistrement de cet appareil.',
+      agentSuspended:
+        'Votre compte agent est suspendu. Contactez l’administration.',
+      otpRequired: 'Une vérification OTP est requise (non disponible en MVP).',
     },
   },
   screens: {

@@ -4,36 +4,38 @@ globs: ["src/**/*.tsx", "src/**/*.ts", "App.tsx", "mobile/src/**/*.tsx", "mobile
 alwaysApply: true
 ---
 
-# Phase UI-only + TanStack — AMO ID Mobile
+# Phase UI + TanStack — AMO ID Mobile
 
 ## Contexte actuel
 
-Il n'y a **pas encore de backend** dans ce dépôt. La priorité est l'interface mobile :
-écrans, navigation, modals, composants visuels, layouts responsive (smartphone + tablette).
+L’**auth Phase 1** est branchée sur l’API NestJS réelle (`POST /mobile/auth/login`, `GET /mobile/me`,
+header `x-device-id`, SecureStore). Le reste métier (enrôlement, vérif, QR, sync) reste mocké
+jusqu’aux phases suivantes.
 
 Les règles absolues du projet (biométrie, QR, audit, sécurité) restent des **contraintes de conception**
 à respecter dès la conception des écrans, même avec des données mockées.
 
-## Périmètre UI-only — IN
+## Périmètre actuel — IN
 
+- Auth réelle : login, `/me`, logout/refresh API, session SecureStore, rejet device révoqué
 - Écrans et layouts responsive (smartphone et tablette : navigation stack depuis l'accueil hub)
 - Navigation par rôle (structure, guards, flux conditionnels)
 - Modals, bottom sheets, overlays, composants réutilisables
 - Formulaires d'enrôlement (multi-étapes, validation locale)
-- Listes, tableaux, recherche bénéficiaires (données mockées)
+- Listes, tableaux, recherche bénéficiaires (données mockées hors auth)
 - i18n français (`src/i18n/fr.ts`) — NEVER hardcoder une chaîne visible
 - États UI : loading, empty, error, success
 - Bannière offline, indicateurs de file d'attente (visuels uniquement pour l'instant)
 
-## Périmètre UI-only — OUT (pour l'instant)
+## Périmètre encore mock / OUT (jusqu’à demande explicite)
 
-- Appels API réels vers NestJS
+- Appels API métier hors auth (bénéficiaires, enrollments, vérif, QR)
 - Intégration CompreFace ou ML Kit
 - SQLite offline et file de synchronisation réelle
-- Auth JWT réelle et keychain
+- OTP/PIN (MVP : `otpEnabled=false` côté API)
 - Génération ou validation cryptographique de QR
 
-NEVER implémenter ces éléments sans demande explicite. Préparer les interfaces et types pour une bascule future.
+NEVER brancher ces domaines sur l’API sans demande explicite (gate de phase).
 
 ## Stratégie mock
 

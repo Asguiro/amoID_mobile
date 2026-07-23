@@ -1,3 +1,7 @@
+/**
+ * Legacy mock sessions for UI demos only.
+ * Phase 1 auth uses `loginWithApi` — do not call `mockLogin` in production flows.
+ */
 import { AGENT_ROLES } from '../../constants/roles';
 import type { AgentSession, LoginCredentials } from '../types/agent.types';
 
@@ -30,6 +34,7 @@ export const mockSessionsByRole: Record<string, AgentSession> = {
   },
 };
 
+/** @deprecated Use `loginWithApi` — kept for Storybook / UI fixtures only. */
 export async function mockLogin(
   credentials: LoginCredentials,
 ): Promise<AgentSession> {

@@ -95,3 +95,10 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+# AMO ID — Auth Phase 1
+
+- API : `EXPO_PUBLIC_API_URL` (défaut `https://amo-id-api.onrender.com`) — voir `.env.example`
+- Device : `EXPO_PUBLIC_DEVICE_ID` (défaut `seed-device-enrollment-01`)
+- Compte seed : `enrollment@amo-id.ml` / `Demo@2026!`
+- Session JWT persistée via `react-native-keychain` — **rebuild natif requis** après install (`cd ios && pod install` / rebuild Android)

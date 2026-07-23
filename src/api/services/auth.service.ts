@@ -31,6 +31,23 @@ type MeApiResponse = {
   establishmentName: string;
 };
 
+export function mapAuthErrorCode(code: string): string | undefined {
+  switch (code) {
+    case 'DEVICE_REVOKED':
+      return 'auth.errors.deviceRevoked';
+    case 'DEVICE_UNKNOWN':
+      return 'auth.errors.deviceUnknown';
+    case 'AGENT_SUSPENDED':
+      return 'auth.errors.agentSuspended';
+    case 'INVALID_CREDENTIALS':
+      return 'auth.errors.invalidCredentials';
+    case 'OTP_REQUIRED':
+      return 'auth.errors.otpRequired';
+    default:
+      return undefined;
+  }
+}
+
 export async function loginWithApi(
   credentials: LoginCredentials,
 ): Promise<AgentSession> {
@@ -48,6 +65,7 @@ export async function loginWithApi(
   const login = await mobileRequest<LoginApiResponse>('/mobile/auth/login', {
     method: 'POST',
     body: { identifier, password },
+    skipAuthRetry: true,
   });
 
   if (login.requiresOtp || !login.accessToken) {
@@ -72,4 +90,28 @@ export async function loginWithApi(
     accessToken: login.accessToken,
     refreshToken: login.refreshToken,
   };
+}
+
+export async function logoutWithApi(session: AgentSession): Promise<void> {
+  if (!session.accessToken) return;
+  try {
+    await mobileRequest('/mobile/auth/logout', {
+      method: 'POST',
+      accessToken: session.accessToken,
+      body: { refreshToken: session.refreshToken },
+      skipAuthRetry: true,
+    });
+  } catch {
+    // Local logout still proceeds if API is unreachable.
+  }
+}
+
+export async function refreshWithApi(
+  refreshToken: string,
+): Promise<{ accessToken: string; refreshToken?: string }> {
+  return mobileRequest('/mobile/auth/refresh', {
+    method: 'POST',
+    body: { refreshToken },
+    skipAuthRetry: true,
+  });
 }

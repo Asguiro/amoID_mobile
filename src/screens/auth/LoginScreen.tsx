@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Image, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { loginWithApi } from '../../api/services/auth.service';
+import { loginWithApi, mapAuthErrorCode } from '../../api/services/auth.service';
 import { MobileApiError } from '../../api/client';
 import type { LoginCredentials } from '../../api/types/agent.types';
 import {
@@ -106,11 +106,12 @@ export function LoginScreen() {
       const session = await loginWithApi(credentials);
       login(session);
     } catch (error) {
-      const message =
-        error instanceof MobileApiError
-          ? error.message
-          : t('auth.errors.generic');
-      setSubmitError(message);
+      if (error instanceof MobileApiError) {
+        const key = mapAuthErrorCode(error.code);
+        setSubmitError(key ? t(key) : error.message || t('auth.errors.generic'));
+      } else {
+        setSubmitError(t('auth.errors.generic'));
+      }
     } finally {
       setIsSubmitting(false);
     }

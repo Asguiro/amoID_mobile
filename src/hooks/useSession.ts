@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import {
+  logoutWithApi,
+  mapAuthErrorCode,
+} from '../api/services/auth.service';
+import type { AgentSession } from '../api/types/agent.types';
+import {
   clearSession,
+  hydrateSession,
   sessionStore,
   setSession,
   type SessionState,
 } from '../store/session.store';
-import type { AgentSession } from '../api/types/agent.types';
 
 export function useSession() {
   const [state, setState] = useState<SessionState>(sessionStore.state);
@@ -23,6 +28,7 @@ export function useSession() {
   return {
     session: state.session,
     isAuthenticated: state.isAuthenticated,
+    isHydrated: state.isHydrated,
     pendingSyncCount: state.pendingSyncCount,
     isOffline: state.isOffline,
   };
@@ -33,9 +39,13 @@ export function useSessionActions() {
     setSession(nextSession);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const current = sessionStore.state.session;
+    if (current) {
+      await logoutWithApi(current);
+    }
     clearSession();
   };
 
-  return { login, logout };
+  return { login, logout, mapAuthErrorCode, hydrateSession };
 }
