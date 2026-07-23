@@ -28,11 +28,14 @@ export const fr = {
     securityNote:
       'Connexion sécurisée réservée aux agents habilités. Vos identifiants sont protégés.',
     devHint:
-      'Phase pilote : utilisez un identifiant contenant « soin » pour simuler un agent point de soin.',
+      'Phase 1 : enrollment@amo-id.ml / Demo@2026! (device seed-device-enrollment-01).',
     validation: {
       identifierRequired: 'L’identifiant est obligatoire.',
       passwordRequired: 'Le mot de passe est obligatoire.',
       passwordMinLength: 'Le mot de passe doit contenir au moins 6 caractères.',
+    },
+    errors: {
+      generic: 'Connexion impossible. Vérifiez vos identifiants et le réseau.',
     },
   },
   screens: {

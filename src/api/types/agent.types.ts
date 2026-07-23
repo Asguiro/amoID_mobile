@@ -7,6 +7,8 @@ export interface AgentSession {
   establishmentId: string;
   establishmentName: string;
   deviceId: string;
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 export interface LoginCredentials {

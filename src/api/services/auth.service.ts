@@ -1,0 +1,75 @@
+import { AGENT_ROLES, type AgentRole } from '../../constants/roles';
+import { getMobileDeviceId, MobileApiError, mobileRequest } from '../client';
+import type { AgentSession, LoginCredentials } from '../types/agent.types';
+
+const API_TO_MOBILE_ROLE: Record<string, AgentRole> = {
+  ENROLLMENT_AGENT: AGENT_ROLES.AGENT_ENROLLMENT,
+  CARE_POINT_AGENT: AGENT_ROLES.AGENT_CARE_POINT,
+  ESTABLISHMENT_SUPERVISOR: AGENT_ROLES.SUPERVISOR_ESTABLISHMENT,
+  REGIONAL_SUPERVISOR: AGENT_ROLES.SUPERVISOR_REGIONAL,
+  ADMIN_CENTRAL: AGENT_ROLES.ADMIN,
+  AUDITOR: AGENT_ROLES.AUDITOR,
+};
+
+type LoginApiResponse = {
+  accessToken?: string;
+  refreshToken?: string;
+  requiresOtp?: boolean;
+  user?: {
+    id: string;
+    displayName: string;
+    role: string;
+    establishmentId: string;
+  };
+};
+
+type MeApiResponse = {
+  id: string;
+  displayName: string;
+  role: string;
+  establishmentId: string;
+  establishmentName: string;
+};
+
+export async function loginWithApi(
+  credentials: LoginCredentials,
+): Promise<AgentSession> {
+  const identifier = credentials.identifier.trim();
+  const password = credentials.password;
+
+  if (!identifier || !password) {
+    throw new MobileApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Identifiant et mot de passe obligatoires.',
+    );
+  }
+
+  const login = await mobileRequest<LoginApiResponse>('/mobile/auth/login', {
+    method: 'POST',
+    body: { identifier, password },
+  });
+
+  if (login.requiresOtp || !login.accessToken) {
+    throw new MobileApiError(
+      501,
+      'OTP_REQUIRED',
+      'OTP requis — non supporté en Phase 1 MVP.',
+    );
+  }
+
+  const me = await mobileRequest<MeApiResponse>('/mobile/me', {
+    accessToken: login.accessToken,
+  });
+
+  return {
+    agentId: me.id,
+    fullName: me.displayName,
+    role: API_TO_MOBILE_ROLE[me.role] ?? AGENT_ROLES.AGENT_ENROLLMENT,
+    establishmentId: me.establishmentId,
+    establishmentName: me.establishmentName,
+    deviceId: getMobileDeviceId(),
+    accessToken: login.accessToken,
+    refreshToken: login.refreshToken,
+  };
+}

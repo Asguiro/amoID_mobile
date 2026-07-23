@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Image, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { mockLogin } from '../../api/mocks/session.mock';
+import { loginWithApi } from '../../api/services/auth.service';
+import { MobileApiError } from '../../api/client';
 import type { LoginCredentials } from '../../api/types/agent.types';
 import {
   AppButton,
@@ -60,6 +61,7 @@ export function LoginScreen() {
   });
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | undefined>();
 
   const updateField = <K extends keyof LoginFormState>(
     key: K,
@@ -88,6 +90,7 @@ export function LoginScreen() {
   const handleSubmit = async () => {
     const nextErrors = validate();
     setErrors(nextErrors);
+    setSubmitError(undefined);
 
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -100,8 +103,14 @@ export function LoginScreen() {
         identifier: form.identifier.trim(),
         password: form.password,
       };
-      const session = await mockLogin(credentials);
+      const session = await loginWithApi(credentials);
       login(session);
+    } catch (error) {
+      const message =
+        error instanceof MobileApiError
+          ? error.message
+          : t('auth.errors.generic');
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -131,6 +140,11 @@ export function LoginScreen() {
 
       <AppCard variant="elevated">
         <View style={flow.formFields}>
+          {submitError ? (
+            <AppText variant="caption" color={colors.textSecondary}>
+              {submitError}
+            </AppText>
+          ) : null}
           <AppTextInput
             label={t('auth.identifierLabel')}
             value={form.identifier}
