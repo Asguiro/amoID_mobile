@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppStatusBar } from '../components/ui/AppStatusBar';
 import { AppNavigationContainer } from '../navigation/MainNavigator';
 import { RootNavigator } from '../navigation/RootNavigator';
+import { hydrateMobileDeviceId } from '../api/device-id';
 import { hydrateSession } from '../store/session.store';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
@@ -26,6 +27,7 @@ function BootSplashGate({ children }: PropsWithChildren) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      await hydrateMobileDeviceId();
       await hydrateSession();
       if (!cancelled) {
         setReady(true);

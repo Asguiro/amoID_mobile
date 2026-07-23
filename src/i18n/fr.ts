@@ -25,10 +25,11 @@ export const fr = {
     passwordPlaceholder: 'Votre mot de passe',
     submit: 'Se connecter',
     submitting: 'Connexion en cours…',
+    retryLogin: 'Réessayer la connexion',
     securityNote:
       'Connexion sécurisée réservée aux agents habilités. Vos identifiants sont protégés.',
     devHint:
-      'Phase 1 : enrollment@amo-id.ml / Demo@2026! (device seed-device-enrollment-01).',
+      'Phase 1 : enrollment@amo-id.ml / Demo@2026! — appareil seed ou nouvel ID généré automatiquement.',
     validation: {
       identifierRequired: 'L’identifiant est obligatoire.',
       passwordRequired: 'Le mot de passe est obligatoire.',
@@ -41,9 +42,37 @@ export const fr = {
         'Cet appareil a été révoqué. Contactez votre superviseur.',
       deviceUnknown:
         'Appareil non reconnu. Demandez l’enregistrement de cet appareil.',
+      devicePending:
+        'Cet appareil est en attente d’approbation. Les modules restent verrouillés.',
+      deviceRequired: 'Identifiant appareil manquant. Redémarrez l’application.',
       agentSuspended:
         'Votre compte agent est suspendu. Contactez l’administration.',
       otpRequired: 'Une vérification OTP est requise (non disponible en MVP).',
+    },
+    deviceAccess: {
+      subtitleBlocked:
+        'L’accès aux modules est bloqué tant que cet appareil n’est pas approuvé.',
+      unknownTitle: 'Appareil non enregistré',
+      unknownBody:
+        'Ce terminal n’est pas reconnu. Demandez l’enregistrement ou communiquez l’identifiant à votre superviseur.',
+      pendingTitle: 'En attente d’approbation',
+      pendingBody:
+        'Votre demande a été transmise. Un superviseur doit approuver cet appareil avant toute connexion.',
+      pendingHint:
+        'Vous ne pouvez pas accéder à l’application tant que l’appareil n’est pas approuvé.',
+      revokedTitle: 'Appareil révoqué',
+      revokedBody:
+        'Cet appareil a été désactivé par l’administration. La connexion et les modules sont interdits.',
+      revokedHint:
+        'Contactez votre superviseur pour une restauration ou un nouvel enrôlement.',
+      deviceIdLabel: 'Identifiant appareil',
+      shareId: 'Partager',
+      shareMessage:
+        'Identifiant appareil AMO ID à enregistrer : {{deviceId}}',
+      requestCta: 'Demander l’enregistrement',
+      requesting: 'Envoi de la demande…',
+      requestSent:
+        'Demande envoyée. Réessayez la connexion après approbation.',
     },
   },
   screens: {

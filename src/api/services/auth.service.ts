@@ -1,4 +1,5 @@
 import { AGENT_ROLES, type AgentRole } from '../../constants/roles';
+import { getMobilePlatform } from '../device-id';
 import { getMobileDeviceId, MobileApiError, mobileRequest } from '../client';
 import type { AgentSession, LoginCredentials } from '../types/agent.types';
 
@@ -31,12 +32,22 @@ type MeApiResponse = {
   establishmentName: string;
 };
 
+type DeviceRegistrationResponse = {
+  status: 'PENDING' | 'TRUSTED';
+  message: string;
+  deviceId: string;
+};
+
 export function mapAuthErrorCode(code: string): string | undefined {
   switch (code) {
     case 'DEVICE_REVOKED':
       return 'auth.errors.deviceRevoked';
     case 'DEVICE_UNKNOWN':
       return 'auth.errors.deviceUnknown';
+    case 'DEVICE_PENDING':
+      return 'auth.errors.devicePending';
+    case 'DEVICE_REQUIRED':
+      return 'auth.errors.deviceRequired';
     case 'AGENT_SUSPENDED':
       return 'auth.errors.agentSuspended';
     case 'INVALID_CREDENTIALS':
@@ -45,6 +56,22 @@ export function mapAuthErrorCode(code: string): string | undefined {
       return 'auth.errors.otpRequired';
     default:
       return undefined;
+  }
+}
+
+export function deviceAccessFromAuthCode(
+  code: string,
+): 'unknown' | 'pending' | 'revoked' | null {
+  switch (code) {
+    case 'DEVICE_REVOKED':
+      return 'revoked';
+    case 'DEVICE_PENDING':
+      return 'pending';
+    case 'DEVICE_UNKNOWN':
+    case 'DEVICE_REQUIRED':
+      return 'unknown';
+    default:
+      return null;
   }
 }
 
@@ -90,6 +117,34 @@ export async function loginWithApi(
     accessToken: login.accessToken,
     refreshToken: login.refreshToken,
   };
+}
+
+export async function requestDeviceRegistrationWithApi(
+  credentials: LoginCredentials,
+): Promise<DeviceRegistrationResponse> {
+  const identifier = credentials.identifier.trim();
+  const password = credentials.password;
+
+  if (!identifier || !password) {
+    throw new MobileApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Identifiant et mot de passe obligatoires.',
+    );
+  }
+
+  return mobileRequest<DeviceRegistrationResponse>(
+    '/mobile/auth/device-registration-request',
+    {
+      method: 'POST',
+      body: {
+        identifier,
+        password,
+        platform: getMobilePlatform(),
+      },
+      skipAuthRetry: true,
+    },
+  );
 }
 
 export async function logoutWithApi(session: AgentSession): Promise<void> {

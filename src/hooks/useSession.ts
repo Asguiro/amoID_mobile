@@ -31,6 +31,8 @@ export function useSession() {
     isHydrated: state.isHydrated,
     pendingSyncCount: state.pendingSyncCount,
     isOffline: state.isOffline,
+    deviceAccessStatus: state.deviceAccessStatus,
+    deviceAccessCode: state.deviceAccessCode,
   };
 }
 

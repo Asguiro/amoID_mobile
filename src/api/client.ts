@@ -3,18 +3,20 @@ import {
   getAccessToken,
   getRefreshToken,
   patchSessionTokens,
+  setDeviceAccessStatus,
+  type DeviceAccessStatus,
 } from '../store/session.store';
+import { getMobileDeviceId } from './device-id';
 
 declare const process: { env: Record<string, string | undefined> };
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL ?? 'https://amo-id-api.onrender.com';
-const DEVICE_ID =
-  process.env.EXPO_PUBLIC_DEVICE_ID ?? 'seed-device-enrollment-01';
 
 const SESSION_KILL_CODES = new Set([
   'DEVICE_REVOKED',
   'DEVICE_UNKNOWN',
+  'DEVICE_PENDING',
   'AGENT_SUSPENDED',
 ]);
 
@@ -30,12 +32,24 @@ export class MobileApiError extends Error {
   }
 }
 
-export function getMobileDeviceId() {
-  return DEVICE_ID;
-}
+export { getMobileDeviceId } from './device-id';
 
 export function getApiBaseUrl() {
   return API_URL;
+}
+
+function deviceAccessFromCode(code: string): DeviceAccessStatus | null {
+  switch (code) {
+    case 'DEVICE_REVOKED':
+      return 'revoked';
+    case 'DEVICE_PENDING':
+      return 'pending';
+    case 'DEVICE_UNKNOWN':
+    case 'DEVICE_REQUIRED':
+      return 'unknown';
+    default:
+      return null;
+  }
 }
 
 let refreshInFlight: Promise<boolean> | null = null;
@@ -53,7 +67,7 @@ async function tryRefreshAccessToken(): Promise<boolean> {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          'x-device-id': DEVICE_ID,
+          'x-device-id': getMobileDeviceId(),
         },
         body: JSON.stringify({ refreshToken }),
       });
@@ -93,7 +107,7 @@ export async function mobileRequest<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
-    'x-device-id': options.deviceId ?? DEVICE_ID,
+    'x-device-id': options.deviceId ?? getMobileDeviceId(),
   };
 
   if (options.body !== undefined) {
@@ -127,6 +141,8 @@ export async function mobileRequest<T>(
     }
 
     if (SESSION_KILL_CODES.has(code)) {
+      const access = deviceAccessFromCode(code);
+      if (access) setDeviceAccessStatus(access, code);
       clearSession();
       throw new MobileApiError(response.status, code, message);
     }
@@ -135,7 +151,8 @@ export async function mobileRequest<T>(
       response.status === 401 &&
       !options.skipAuthRetry &&
       !path.includes('/auth/login') &&
-      !path.includes('/auth/refresh');
+      !path.includes('/auth/refresh') &&
+      !path.includes('/auth/device-registration-request');
 
     if (canRetry) {
       const refreshed = await tryRefreshAccessToken();

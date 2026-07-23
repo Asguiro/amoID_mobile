@@ -7,12 +7,16 @@ import {
 } from '../api/session.secure-storage';
 import { runAsync } from '../utils/runAsync';
 
+export type DeviceAccessStatus = 'ok' | 'unknown' | 'pending' | 'revoked';
+
 export interface SessionState {
   session: AgentSession | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
   pendingSyncCount: number;
   isOffline: boolean;
+  deviceAccessStatus: DeviceAccessStatus;
+  deviceAccessCode?: string;
 }
 
 const initialState: SessionState = {
@@ -21,6 +25,7 @@ const initialState: SessionState = {
   isHydrated: false,
   pendingSyncCount: 0,
   isOffline: false,
+  deviceAccessStatus: 'ok',
 };
 
 export const sessionStore = new Store<SessionState>(initialState);
@@ -30,6 +35,8 @@ export function setSession(session: AgentSession): void {
     ...state,
     session,
     isAuthenticated: true,
+    deviceAccessStatus: 'ok',
+    deviceAccessCode: undefined,
   }));
   runAsync(() => saveSessionSecure(session));
 }
@@ -60,6 +67,25 @@ export function clearSession(): void {
     pendingSyncCount: 0,
   }));
   runAsync(() => clearSessionSecure());
+}
+
+export function setDeviceAccessStatus(
+  status: DeviceAccessStatus,
+  code?: string,
+): void {
+  sessionStore.setState(state => ({
+    ...state,
+    deviceAccessStatus: status,
+    deviceAccessCode: code,
+  }));
+}
+
+export function clearDeviceAccessStatus(): void {
+  sessionStore.setState(state => ({
+    ...state,
+    deviceAccessStatus: 'ok',
+    deviceAccessCode: undefined,
+  }));
 }
 
 export function markHydrated(): void {

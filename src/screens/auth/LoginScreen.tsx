@@ -1,8 +1,19 @@
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  Share,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { loginWithApi, mapAuthErrorCode } from '../../api/services/auth.service';
-import { MobileApiError } from '../../api/client';
+import {
+  deviceAccessFromAuthCode,
+  loginWithApi,
+  mapAuthErrorCode,
+  requestDeviceRegistrationWithApi,
+} from '../../api/services/auth.service';
+import { getMobileDeviceId, MobileApiError } from '../../api/client';
 import type { LoginCredentials } from '../../api/types/agent.types';
 import {
   AppButton,
@@ -12,8 +23,13 @@ import {
   AppTextInput,
 } from '../../components/ui';
 import { FlowFooter } from '../../components/layout/FlowLayout';
-import { useSessionActions } from '../../hooks/useSession';
+import { useSession, useSessionActions } from '../../hooks/useSession';
 import { useTranslation } from '../../hooks/useTranslation';
+import {
+  clearDeviceAccessStatus,
+  setDeviceAccessStatus,
+  type DeviceAccessStatus,
+} from '../../store/session.store';
 import { useFlowStyles } from '../../theme/useFlowStyles';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -49,9 +65,113 @@ function SecurityShield({ color }: { color: string }) {
   );
 }
 
+function DeviceAccessPanel({
+  status,
+  deviceId,
+  onRequestRegistration,
+  onShareId,
+  requesting,
+  requestSuccess,
+}: {
+  status: Exclude<DeviceAccessStatus, 'ok'>;
+  deviceId: string;
+  onRequestRegistration?: () => void;
+  onShareId: () => void;
+  requesting?: boolean;
+  requestSuccess?: boolean;
+}) {
+  const { t } = useTranslation();
+  const { colors, tokens } = useTheme();
+  const tone =
+    status === 'revoked'
+      ? tokens.colors.danger
+      : status === 'pending'
+        ? tokens.colors.warning
+        : tokens.colors.info;
+
+  const titleKey =
+    status === 'revoked'
+      ? 'auth.deviceAccess.revokedTitle'
+      : status === 'pending'
+        ? 'auth.deviceAccess.pendingTitle'
+        : 'auth.deviceAccess.unknownTitle';
+  const bodyKey =
+    status === 'revoked'
+      ? 'auth.deviceAccess.revokedBody'
+      : status === 'pending'
+        ? 'auth.deviceAccess.pendingBody'
+        : 'auth.deviceAccess.unknownBody';
+
+  return (
+    <View
+      style={[
+        styles.accessPanel,
+        {
+          backgroundColor: `${tone}14`,
+          borderColor: `${tone}55`,
+        },
+      ]}
+      accessibilityRole="alert">
+      <AppText variant="title" color={tone}>
+        {t(titleKey)}
+      </AppText>
+      <AppText variant="body" color={colors.textSecondary} style={styles.accessBody}>
+        {t(bodyKey)}
+      </AppText>
+      <View style={styles.deviceIdRow}>
+        <View style={{ flex: 1 }}>
+          <AppText variant="caption" color={colors.textSecondary}>
+            {t('auth.deviceAccess.deviceIdLabel')}
+          </AppText>
+          <AppText variant="body" style={styles.deviceIdValue}>
+            {deviceId}
+          </AppText>
+        </View>
+        <Pressable
+          onPress={onShareId}
+          accessibilityRole="button"
+          accessibilityLabel={t('auth.deviceAccess.shareId')}>
+          <AppText variant="caption" color={tokens.colors.info}>
+            {t('auth.deviceAccess.shareId')}
+          </AppText>
+        </Pressable>
+      </View>
+      {requestSuccess ? (
+        <AppText variant="caption" color={tokens.colors.success} style={styles.accessBody}>
+          {t('auth.deviceAccess.requestSent')}
+        </AppText>
+      ) : null}
+      {status === 'unknown' && onRequestRegistration ? (
+        <AppButton
+          label={
+            requesting
+              ? t('auth.deviceAccess.requesting')
+              : t('auth.deviceAccess.requestCta')
+          }
+          loading={requesting}
+          fullWidth
+          onPress={onRequestRegistration}
+          containerStyle={{ marginTop: tokens.spacing.md }}
+        />
+      ) : null}
+      {status === 'pending' ? (
+        <AppText variant="caption" color={colors.textSecondary} style={styles.accessBody}>
+          {t('auth.deviceAccess.pendingHint')}
+        </AppText>
+      ) : null}
+      {status === 'revoked' ? (
+        <AppText variant="caption" color={colors.textSecondary} style={styles.accessBody}>
+          {t('auth.deviceAccess.revokedHint')}
+        </AppText>
+      ) : null}
+    </View>
+  );
+}
+
 export function LoginScreen() {
   const { t } = useTranslation();
   const { login } = useSessionActions();
+  const { deviceAccessStatus } = useSession();
   const { colors, tokens } = useTheme();
   const flow = useFlowStyles();
 
@@ -61,7 +181,14 @@ export function LoginScreen() {
   });
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
+  const deviceId = getMobileDeviceId();
+  const blocked =
+    deviceAccessStatus === 'unknown' ||
+    deviceAccessStatus === 'pending' ||
+    deviceAccessStatus === 'revoked';
 
   const updateField = <K extends keyof LoginFormState>(
     key: K,
@@ -87,10 +214,46 @@ export function LoginScreen() {
     return nextErrors;
   };
 
+  const handleShareDeviceId = async () => {
+    await Share.share({
+      message: t('auth.deviceAccess.shareMessage', { deviceId }),
+    });
+  };
+
+  const handleRequestRegistration = async () => {
+    const nextErrors = validate();
+    setErrors(nextErrors);
+    setSubmitError(undefined);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    setIsRequesting(true);
+    try {
+      const credentials: LoginCredentials = {
+        identifier: form.identifier.trim(),
+        password: form.password,
+      };
+      await requestDeviceRegistrationWithApi(credentials);
+      setDeviceAccessStatus('pending', 'DEVICE_PENDING');
+      setRequestSuccess(true);
+    } catch (error) {
+      if (error instanceof MobileApiError) {
+        const access = deviceAccessFromAuthCode(error.code);
+        if (access) setDeviceAccessStatus(access, error.code);
+        const key = mapAuthErrorCode(error.code);
+        setSubmitError(key ? t(key) : error.message || t('auth.errors.generic'));
+      } else {
+        setSubmitError(t('auth.errors.generic'));
+      }
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
   const handleSubmit = async () => {
     const nextErrors = validate();
     setErrors(nextErrors);
     setSubmitError(undefined);
+    setRequestSuccess(false);
 
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -104,9 +267,12 @@ export function LoginScreen() {
         password: form.password,
       };
       const session = await loginWithApi(credentials);
+      clearDeviceAccessStatus();
       login(session);
     } catch (error) {
       if (error instanceof MobileApiError) {
+        const access = deviceAccessFromAuthCode(error.code);
+        if (access) setDeviceAccessStatus(access, error.code);
         const key = mapAuthErrorCode(error.code);
         setSubmitError(key ? t(key) : error.message || t('auth.errors.generic'));
       } else {
@@ -135,14 +301,41 @@ export function LoginScreen() {
           {t('auth.title')}
         </AppText>
         <AppText variant="body" color={colors.textSecondary} style={flow.hint}>
-          {t('auth.subtitle')}
+          {blocked ? t('auth.deviceAccess.subtitleBlocked') : t('auth.subtitle')}
         </AppText>
       </View>
 
+      {blocked ? (
+        <DeviceAccessPanel
+          status={deviceAccessStatus}
+          deviceId={deviceId}
+          onRequestRegistration={
+            deviceAccessStatus === 'unknown'
+              ? handleRequestRegistration
+              : undefined
+          }
+          onShareId={handleShareDeviceId}
+          requesting={isRequesting}
+          requestSuccess={requestSuccess}
+        />
+      ) : null}
+
       <AppCard variant="elevated">
         <View style={flow.formFields}>
-          {submitError ? (
-            <AppText variant="caption" color={colors.textSecondary}>
+          {submitError && !blocked ? (
+            <View
+              style={[
+                styles.inlineError,
+                { backgroundColor: `${tokens.colors.danger}14` },
+              ]}
+              accessibilityRole="alert">
+              <AppText variant="caption" color={tokens.colors.danger}>
+                {submitError}
+              </AppText>
+            </View>
+          ) : null}
+          {submitError && blocked ? (
+            <AppText variant="caption" color={tokens.colors.danger}>
               {submitError}
             </AppText>
           ) : null}
@@ -157,7 +350,7 @@ export function LoginScreen() {
             textContentType="username"
             autoComplete="username"
             returnKeyType="next"
-            editable={!isSubmitting}
+            editable={!isSubmitting && !isRequesting}
           />
 
           <AppTextInput
@@ -171,13 +364,19 @@ export function LoginScreen() {
             autoComplete="password"
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
-            editable={!isSubmitting}
+            editable={!isSubmitting && !isRequesting}
           />
         </View>
 
         <FlowFooter style={{ marginTop: tokens.spacing.lg }}>
           <AppButton
-            label={isSubmitting ? t('auth.submitting') : t('auth.submit')}
+            label={
+              isSubmitting
+                ? t('auth.submitting')
+                : blocked
+                  ? t('auth.retryLogin')
+                  : t('auth.submit')
+            }
             loading={isSubmitting}
             fullWidth
             onPress={handleSubmit}
@@ -206,5 +405,30 @@ const styles = StyleSheet.create({
   trustText: {
     flex: 1,
     lineHeight: 18,
+  },
+  accessPanel: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    gap: 8,
+  },
+  accessBody: {
+    lineHeight: 20,
+  },
+  deviceIdRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 12,
+    marginTop: 4,
+  },
+  deviceIdValue: {
+    fontFamily: 'monospace',
+    marginTop: 2,
+  },
+  inlineError: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
 });
